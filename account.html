@@ -1,0 +1,23 @@
+<!DOCTYPE html>
+<html lang="vi">
+<head>
+  <meta charset="UTF-8">
+  <meta name="viewport" content="width=device-width, initial-scale=1.0">
+  <title>CodeNest | Thông tin tài khoản</title>
+  <link rel="preconnect" href="https://fonts.googleapis.com">
+  <link rel="preconnect" href="https://fonts.gstatic.com" crossorigin>
+  <link href="https://fonts.googleapis.com/css2?family=DM+Mono:wght@400;500&family=Space+Grotesk:wght@400;500;600;700&display=swap" rel="stylesheet">
+  <link rel="stylesheet" href="account.css">
+</head>
+<body>
+  <header class="topbar"><a class="brand" href="store.html"><span class="brand-mark">&lt;/&gt;</span><span>codenest<span class="accent">.</span></span></a><nav><a href="store.html">Bán code</a><a href="wallet.html">Ví tiền</a><a class="active" href="account.html">Tài khoản</a></nav><button id="logoutButton" type="button">Đăng xuất</button></header>
+  <main class="account-shell">
+    <section class="account-heading"><p class="eyebrow">ACCOUNT CENTER</p><h1>Thông tin<br><em>của bạn.</em></h1><p>Quản lý hồ sơ, số dư và bảo mật tài khoản CodeNest.</p></section>
+    <section class="account-grid">
+      <article class="profile-card"><div class="avatar" id="avatar">U</div><p class="card-label">TÀI KHOẢN HIỆN TẠI</p><h2 id="accountName">USER</h2><div class="profile-details"><span>Email / tên đăng nhập <b id="accountEmail">-</b></span><span>Vai trò <b id="accountRole">Thành viên</b></span><span>Số dư <b class="balance" id="accountBalance">0đ</b></span></div></article>
+      <form class="password-card" id="passwordForm"><p class="card-label">BẢO MẬT</p><h2>Đổi mật khẩu</h2><p class="card-copy">Sử dụng mật khẩu mới dài ít nhất 6 ký tự.</p><label for="currentPassword">Mật khẩu hiện tại</label><input id="currentPassword" type="password" required><label for="newPassword">Mật khẩu mới</label><input id="newPassword" type="password" minlength="6" required><label for="confirmPassword">Nhập lại mật khẩu mới</label><input id="confirmPassword" type="password" minlength="6" required><button class="save-button" type="submit">Lưu mật khẩu <span>↗</span></button><p class="form-status" id="passwordStatus" role="status"></p></form>
+    </section>
+  </main>
+  <script src="account.js"></script>
+</body>
+</html>

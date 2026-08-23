@@ -1,0 +1,22 @@
+<!DOCTYPE html>
+<html lang="vi">
+<head>
+  <meta charset="UTF-8">
+  <meta name="viewport" content="width=device-width, initial-scale=1.0">
+  <title>CodeNest | Ví tiền</title>
+  <link rel="preconnect" href="https://fonts.googleapis.com">
+  <link rel="preconnect" href="https://fonts.gstatic.com" crossorigin>
+  <link href="https://fonts.googleapis.com/css2?family=DM+Mono:wght@400;500&family=Space+Grotesk:wght@400;500;600;700&display=swap" rel="stylesheet">
+  <link rel="stylesheet" href="wallet.css">
+</head>
+<body>
+  <header class="topbar"><a class="brand" href="store.html"><span class="brand-mark">&lt;/&gt;</span><span>codenest<span class="accent">.</span></span></a><nav><a href="store.html">Kho code</a><a class="active" href="wallet.html">Ví tiền</a><a id="adminLink" href="admin.html" hidden>Quản trị</a></nav><button id="logoutButton" type="button">Đăng xuất</button></header>
+  <main class="wallet-shell">
+    <section class="wallet-heading"><p class="eyebrow">YOUR CODE WALLET</p><h1>Nạp thêm<br><em>năng lượng.</em></h1><p>Dùng số dư để mua những bộ code chất lượng từ cộng đồng CodeNest.</p></section>
+    <section class="wallet-grid"><div class="balance-card"><span>SỐ DƯ HIỆN TẠI</span><strong id="balance">0đ</strong><small id="walletUser">USER</small></div><div class="topup-card"><p class="card-title">Chọn số tiền cần nạp</p><div class="amount-grid"><button data-amount="50000" type="button">50.000đ</button><button data-amount="100000" type="button">100.000đ</button><button data-amount="200000" type="button">200.000đ</button><button data-amount="500000" type="button">500.000đ</button></div><button class="topup-button" id="topupButton" type="button">Tạo mã QR chuyển khoản <span>↗</span></button><p class="wallet-status" id="walletStatus" role="status"></p></div></section>
+    <section class="transfer-card" id="transferCard" hidden><div><p class="card-title">QUÉT ĐỂ CHUYỂN KHOẢN</p><h2>Thanh toán qua MB Bank</h2><p class="transfer-note">Mở app ngân hàng và quét mã. Vui lòng chuyển đúng số tiền và nội dung bên dưới.</p><div class="transfer-details"><span>Ngân hàng <b>MB Bank</b></span><span>Số tài khoản <b>0832510710</b></span><span>Chủ tài khoản <b>DO THANH TRUNG</b></span><span>Số tiền <b id="transferAmount">0đ</b></span><span>Nội dung <b id="transferContent">CN-000000</b></span></div></div><img id="bankQr" alt="Mã QR chuyển khoản MB Bank"></section>
+    <p class="wallet-note">Sau khi chuyển khoản, đơn sẽ ở trạng thái chờ duyệt. Số dư chỉ được cộng sau khi admin xác nhận giao dịch.</p>
+  </main>
+  <script src="wallet.js"></script>
+</body>
+</html>

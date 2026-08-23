@@ -1,0 +1,27 @@
+<!DOCTYPE html>
+<html lang="vi">
+<head>
+  <meta charset="UTF-8">
+  <meta name="viewport" content="width=device-width, initial-scale=1.0">
+  <title>CodeNest | Chợ bán code</title>
+  <link rel="preconnect" href="https://fonts.googleapis.com">
+  <link rel="preconnect" href="https://fonts.gstatic.com" crossorigin>
+  <link href="https://fonts.googleapis.com/css2?family=DM+Mono:wght@400;500&family=Space+Grotesk:wght@400;500;600;700&display=swap" rel="stylesheet">
+  <link rel="stylesheet" href="store.css">
+</head>
+<body>
+  <header class="topbar">
+    <a class="brand" href="store.html"><span class="brand-mark">&lt;/&gt;</span><span>codenest<span class="accent">.</span></span></a>
+    <nav><a class="active" href="store.html">Bán code</a><a href="wallet.html">Ví tiền</a><a href="#collections">Danh mục</a><a id="adminLink" href="admin.html" hidden>Quản trị</a></nav>
+      <nav><a class="active" href="store.html">Bán code</a><a href="wallet.html">Ví tiền</a><a href="#collections">Danh mục</a><a href="account.html">Tài khoản</a><a id="adminLink" href="admin.html" hidden>Quản trị</a></nav>
+    <div class="account-menu"><span id="userBadge">USER</span><button id="logoutButton" type="button">Đăng xuất</button></div>
+  </header>
+  <main>
+    <section class="market-hero"><div><p class="eyebrow"><span></span> chợ code chọn lọc</p><h1>Mua code.<br><em>Làm nhanh hơn.</em></h1><p class="hero-copy">Khám phá những bộ code chất lượng từ cộng đồng developer. Tải ý tưởng về và bắt đầu dự án ngay hôm nay.</p></div><div class="hero-stat"><strong>00</strong><span>bộ code<br>đang bán</span></div></section>
+    <section class="toolbar" aria-label="Lọc sản phẩm"><div><span class="result-label">Hiển thị <b>00</b> bộ code</span></div><div class="filters"><button class="filter active" data-filter="all">Tất cả</button><button class="filter" data-filter="ui">UI kit</button><button class="filter" data-filter="web">Web template</button><button class="filter" data-filter="motion">Hiệu ứng</button></div></section>
+    <section class="product-grid" id="productGrid" aria-label="Các sản phẩm code"></section>
+  </main>
+  <div class="toast" id="toast" role="status"></div>
+  <script src="store.js"></script>
+</body>
+</html>
