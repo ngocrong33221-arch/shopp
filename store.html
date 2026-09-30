@@ -3,25 +3,102 @@
 <head>
   <meta charset="UTF-8">
   <meta name="viewport" content="width=device-width, initial-scale=1.0">
-  <title>CodeNest | Chợ bán code</title>
+  <title>CodeNest | Kho code</title>
   <link rel="preconnect" href="https://fonts.googleapis.com">
   <link rel="preconnect" href="https://fonts.gstatic.com" crossorigin>
-  <link href="https://fonts.googleapis.com/css2?family=DM+Mono:wght@400;500&family=Space+Grotesk:wght@400;500;600;700&display=swap" rel="stylesheet">
+  <link href="https://fonts.googleapis.com/css2?family=Inter:wght@300;400;500;600;700;800&family=JetBrains+Mono:wght@400;500&display=swap" rel="stylesheet">
+  <link rel="stylesheet" href="shared.css">
   <link rel="stylesheet" href="store.css">
 </head>
 <body>
+  <div class="page-glow page-glow-1" aria-hidden="true"></div>
+  <div class="page-glow page-glow-2" aria-hidden="true"></div>
+  <div class="cursor" id="cursor" aria-hidden="true"></div>
+
   <header class="topbar">
-    <a class="brand" href="store.html"><span class="brand-mark">&lt;/&gt;</span><span>codenest<span class="accent">.</span></span></a>
-    <nav><a class="active" href="store.html">Bán code</a><a href="wallet.html">Ví tiền</a><a href="#collections">Danh mục</a><a id="adminLink" href="admin.html" hidden>Quản trị</a></nav>
-      <nav><a class="active" href="store.html">Bán code</a><a href="wallet.html">Ví tiền</a><a href="#collections">Danh mục</a><a href="account.html">Tài khoản</a><a id="adminLink" href="admin.html" hidden>Quản trị</a></nav>
-    <div class="account-menu"><span id="userBadge">USER</span><button id="logoutButton" type="button">Đăng xuất</button></div>
+    <div class="topbar-inner">
+      <a class="brand" href="store.html">
+        <div class="brand-icon">&lt;/&gt;</div>
+        <span class="brand-name">code<span class="accent">nest</span></span>
+      </a>
+      <nav class="topbar-nav" id="topNav">
+        <a href="store.html" class="active">Kho code</a>
+        <a href="wallet.html">Ví tiền</a>
+        <a href="account.html">Tài khoản</a>
+        <a href="admin.html" id="adminLink" style="display:none">Quản trị</a>
+      </nav>
+      <div class="topbar-user">
+        <div class="user-badge">
+          <div class="user-avatar" id="userAvatar">U</div>
+          <span id="userBadge">USER</span>
+        </div>
+        <button class="logout-btn" id="logoutButton">Đăng xuất</button>
+      </div>
+    </div>
   </header>
-  <main>
-    <section class="market-hero"><div><p class="eyebrow"><span></span> chợ code chọn lọc</p><h1>Mua code.<br><em>Làm nhanh hơn.</em></h1><p class="hero-copy">Khám phá những bộ code chất lượng từ cộng đồng developer. Tải ý tưởng về và bắt đầu dự án ngay hôm nay.</p></div><div class="hero-stat"><strong>00</strong><span>bộ code<br>đang bán</span></div></section>
-    <section class="toolbar" aria-label="Lọc sản phẩm"><div><span class="result-label">Hiển thị <b>00</b> bộ code</span></div><div class="filters"><button class="filter active" data-filter="all">Tất cả</button><button class="filter" data-filter="ui">UI kit</button><button class="filter" data-filter="web">Web template</button><button class="filter" data-filter="motion">Hiệu ứng</button></div></section>
-    <section class="product-grid" id="productGrid" aria-label="Các sản phẩm code"></section>
+
+  <main class="page-fade">
+    <!-- Hero -->
+    <section class="page-hero">
+      <div class="store-hero-inner">
+        <div class="reveal">
+          <p class="eyebrow">Chợ code chọn lọc</p>
+          <h1 class="page-h1">Mua code.<br><em>Làm nhanh hơn.</em></h1>
+          <p class="page-desc">Khám phá những bộ code chất lượng từ cộng đồng developer.</p>
+        </div>
+        <div class="hero-stat reveal">
+          <span class="stat-big" id="statCount">00</span>
+          <span class="stat-lbl">bộ code<br>đang bán</span>
+        </div>
+      </div>
+    </section>
+
+    <!-- Toolbar -->
+    <section class="store-toolbar reveal" aria-label="Lọc sản phẩm">
+      <div class="toolbar-inner">
+        <span class="result-label">Hiển thị <b id="resultCount">00</b> bộ code</span>
+        <div class="filter-tabs" role="group" aria-label="Bộ lọc">
+          <button class="filter-tab active" data-filter="all">Tất cả</button>
+          <button class="filter-tab" data-filter="ui">UI kit</button>
+          <button class="filter-tab" data-filter="web">Web template</button>
+          <button class="filter-tab" data-filter="motion">Hiệu ứng</button>
+        </div>
+      </div>
+    </section>
+
+    <!-- Grid -->
+    <section class="product-grid" id="productGrid" aria-label="Sản phẩm"></section>
   </main>
-  <div class="toast" id="toast" role="status"></div>
+
+  <div class="payment-modal" id="paymentModal" aria-hidden="true">
+    <div class="payment-backdrop" data-close-payment></div>
+    <section class="payment-dialog" role="dialog" aria-modal="true" aria-labelledby="paymentTitle">
+      <button class="payment-close" type="button" id="closePayment" aria-label="Đóng">×</button>
+      <span class="card-label">THANH TOÁN</span>
+      <h2 id="paymentTitle">Xác nhận mua file</h2>
+      <p class="payment-file" id="paymentFile"></p>
+      <div class="payment-summary">
+        <div><span>Giá sản phẩm</span><strong id="paymentPrice">0đ</strong></div>
+        <div><span>Số dư hiện tại</span><strong id="paymentBalance">Đang kiểm tra...</strong></div>
+        <div class="payment-after"><span>Số dư sau khi mua</span><strong id="paymentAfter">--</strong></div>
+      </div>
+      <p class="payment-status" id="paymentStatus" role="status"></p>
+      <div class="payment-actions">
+        <a class="payment-topup" id="topupLink" href="wallet.html">Nạp thêm tiền</a>
+        <button class="btn-primary payment-confirm" type="button" id="confirmPayment">Xác nhận mua</button>
+      </div>
+    </section>
+  </div>
+
+  <!-- Toast -->
+  <div class="toast" id="toast" role="status">
+    <span class="toast-icon">
+      <svg width="16" height="16" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2.5"><polyline points="20 6 9 17 4 12"/></svg>
+    </span>
+    <span id="toastMsg"></span>
+  </div>
+
+  <script src="shared.js"></script>
   <script src="store.js"></script>
 </body>
 </html>

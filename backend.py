@@ -2,6 +2,7 @@ import os
 import secrets
 import sqlite3
 import ssl
+import uuid
 from datetime import datetime, timezone
 from urllib.parse import urlencode
 import threading
@@ -10,11 +11,13 @@ import time
 from urllib.request import Request, urlopen
 
 from dotenv import load_dotenv
-from flask import Flask, jsonify, request, send_from_directory
+from flask import Flask, jsonify, request, send_file, send_from_directory
+from werkzeug.utils import secure_filename
 
 load_dotenv()
 app = Flask(__name__)
 WEB_ROOT = os.path.dirname(os.path.abspath(__file__))
+UPLOADS_ROOT = os.path.join(WEB_ROOT, 'uploads')
 DATABASE_PATH = os.getenv('DATABASE_PATH', 'codenest.sqlite3')
 TELEGRAM_TOKEN = os.getenv('TELEGRAM_BOT_TOKEN')
 TELEGRAM_CHAT_ID = os.getenv('TELEGRAM_ADMIN_CHAT_ID', '8592672929')
@@ -42,6 +45,7 @@ def db():
 
 
 def init_db():
+    os.makedirs(UPLOADS_ROOT, exist_ok=True)
     with db() as connection:
         connection.execute('''
             CREATE TABLE IF NOT EXISTS topups (
@@ -62,6 +66,20 @@ def init_db():
             )
 
 
+        ''')
+        connection.execute('''
+            CREATE TABLE IF NOT EXISTS products (
+                id TEXT PRIMARY KEY,
+                name TEXT NOT NULL,
+                description TEXT NOT NULL,
+                price INTEGER NOT NULL,
+                category TEXT NOT NULL,
+                file_name TEXT NOT NULL,
+                stored_name TEXT NOT NULL UNIQUE,
+                content_type TEXT,
+                file_size INTEGER NOT NULL,
+                created_at TEXT NOT NULL
+            )
         ''')
 
 
@@ -191,6 +209,137 @@ def health():
     return jsonify({'ok': True, 'telegram_configured': bool(TELEGRAM_TOKEN)})
 
 
+@app.get('/api/products')
+def list_products():
+    with db() as connection:
+        rows = connection.execute(
+            'SELECT id, name, description, price, category, file_name AS fileName, '
+            'file_size AS fileSize, created_at AS createdAt FROM products ORDER BY created_at DESC'
+        ).fetchall()
+    return jsonify([dict(row) for row in rows])
+
+
+@app.post('/api/products')
+def create_product():
+    uploaded = request.files.get('file')
+    if not uploaded or not uploaded.filename:
+        return jsonify({'error': 'file is required'}), 400
+
+    name = str(request.form.get('name', '')).strip()
+    description = str(request.form.get('description', '')).strip()
+    category = str(request.form.get('category', 'web')).strip() or 'web'
+    try:
+        price = int(request.form.get('price', '0'))
+    except (TypeError, ValueError):
+        price = 0
+    if not name or not description or price < 1000:
+        return jsonify({'error': 'name, description and price >= 1000 are required'}), 400
+
+    original_name = uploaded.filename
+    safe_name = secure_filename(original_name) or 'download'
+    product_id = str(uuid.uuid4())
+    stored_name = f'{product_id}-{safe_name}'
+    stored_path = os.path.join(UPLOADS_ROOT, stored_name)
+    uploaded.save(stored_path)
+    file_size = os.path.getsize(stored_path)
+
+    try:
+        with db() as connection:
+            connection.execute(
+                'INSERT INTO products '
+                '(id, name, description, price, category, file_name, stored_name, content_type, file_size, created_at) '
+                'VALUES (?, ?, ?, ?, ?, ?, ?, ?, ?, ?)',
+                (product_id, name, description, price, category, original_name, stored_name,
+                 uploaded.mimetype, file_size, utc_now()),
+            )
+    except Exception:
+        if os.path.exists(stored_path):
+            os.remove(stored_path)
+        raise
+
+    return jsonify({
+        'id': product_id,
+        'name': name,
+        'description': description,
+        'price': price,
+        'category': category,
+        'fileName': original_name,
+        'fileSize': file_size,
+    }), 201
+
+
+@app.get('/api/products/<product_id>/download')
+def download_product(product_id):
+    with db() as connection:
+        product = connection.execute(
+            'SELECT stored_name, file_name, content_type FROM products WHERE id = ?',
+            (product_id,),
+        ).fetchone()
+    if not product:
+        return jsonify({'error': 'product not found'}), 404
+    file_path = os.path.join(UPLOADS_ROOT, product['stored_name'])
+    if not os.path.isfile(file_path):
+        return jsonify({'error': 'file not found'}), 404
+    return send_file(
+        file_path,
+        as_attachment=True,
+        download_name=product['file_name'],
+        mimetype=product['content_type'] or 'application/octet-stream',
+    )
+
+
+@app.post('/api/products/<product_id>/purchase')
+def purchase_product(product_id):
+    data = request.get_json(silent=True) or {}
+    username = str(data.get('username', '')).strip()
+    if not username:
+        return jsonify({'error': 'username is required'}), 400
+
+    with db() as connection:
+        product = connection.execute(
+            'SELECT id, name, price FROM products WHERE id = ?', (product_id,)
+        ).fetchone()
+        if not product:
+            return jsonify({'error': 'product not found'}), 404
+
+        result = connection.execute(
+            'UPDATE balances SET amount = amount - ? '
+            'WHERE username = ? AND amount >= ?',
+            (product['price'], username, product['price']),
+        )
+        if result.rowcount != 1:
+            balance = connection.execute(
+                'SELECT amount FROM balances WHERE username = ?', (username,)
+            ).fetchone()
+            return jsonify({
+                'error': 'insufficient_balance',
+                'balance': balance['amount'] if balance else 0,
+                'price': product['price'],
+            }), 402
+
+    return jsonify({
+        'purchased': True,
+        'productId': product['id'],
+        'productName': product['name'],
+        'price': product['price'],
+    })
+
+
+@app.delete('/api/products/<product_id>')
+def delete_product(product_id):
+    with db() as connection:
+        product = connection.execute(
+            'SELECT stored_name FROM products WHERE id = ?', (product_id,)
+        ).fetchone()
+        if not product:
+            return jsonify({'error': 'product not found'}), 404
+        connection.execute('DELETE FROM products WHERE id = ?', (product_id,))
+    file_path = os.path.join(UPLOADS_ROOT, product['stored_name'])
+    if os.path.isfile(file_path):
+        os.remove(file_path)
+    return jsonify({'deleted': True})
+
+
 @app.get('/api/balances/<path:username>')
 def get_balance(username):
     with db() as connection:
@@ -281,4 +430,4 @@ if TELEGRAM_TOKEN and TELEGRAM_CHAT_ID:
     threading.Thread(target=telegram_polling_loop, name='telegram-polling', daemon=True).start()
 
 if __name__ == '__main__':
-    app.run(host='127.0.0.1', port=5000, debug=False)
+    app.run(host='0.0.0.0', port=5000, debug=False)

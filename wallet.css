@@ -1,2 +1,221 @@
- .transfer-card{display:grid;grid-template-columns:1fr 190px;align-items:center;gap:28px;margin:18px 0 0;padding:30px;border:1px solid var(--line);background:rgba(16,28,18,.8)}.transfer-card h2{margin:10px 0;font-size:24px}.transfer-note{max-width:420px;color:var(--muted);font-size:12px;line-height:1.6}.transfer-details{display:grid;gap:9px;margin-top:20px;color:#859285;font:11px var(--mono)}.transfer-details b{float:right;color:var(--ink);font-weight:400}.transfer-card img{width:190px;height:190px;padding:8px;background:#fff}.transfer-card[hidden]{display:none}@media(max-width:700px){.transfer-card{grid-template-columns:1fr}.transfer-card img{margin:auto}}
-*{box-sizing:border-box}:root{--ink:#f1f5ed;--muted:#8c998d;--green:#b9f36b;--line:rgba(185,243,107,.17);--display:'Space Grotesk',sans-serif;--mono:'DM Mono',monospace}body{margin:0;min-width:320px;color:var(--ink);font-family:var(--display);background:radial-gradient(circle at 75% 15%,#1d3821,transparent 35%),#0a100d}.topbar{display:flex;align-items:center;max-width:1240px;margin:auto;padding:28px 6vw;border-bottom:1px solid var(--line)}.brand{display:flex;align-items:center;gap:10px;color:var(--ink);font-weight:600;text-decoration:none}.brand-mark{display:grid;width:30px;height:30px;place-items:center;border:1px solid var(--green);color:var(--green);font:10px var(--mono)}.accent,em{color:var(--green);font-style:normal}.topbar nav{display:flex;gap:28px;margin-left:auto;margin-right:40px}.topbar nav a{color:#849085;font-size:12px;text-decoration:none}.topbar nav a.active,.topbar nav a:hover{color:var(--ink)}.topbar button{border:0;color:#9aa69a;background:none;cursor:pointer}.wallet-shell{max-width:1000px;margin:auto;padding:90px 5vw}.eyebrow{color:var(--green);font:10px var(--mono);letter-spacing:.12em}.wallet-heading h1{margin:18px 0;font-size:clamp(52px,7vw,92px);line-height:.92;letter-spacing:-.08em}.wallet-heading p:last-child{max-width:390px;color:var(--muted);font-size:14px;line-height:1.6}.wallet-grid{display:grid;grid-template-columns:1fr 1.2fr;gap:18px;margin-top:70px}.balance-card,.topup-card{padding:30px;border:1px solid var(--line);background:rgba(16,28,18,.8)}.balance-card{display:flex;flex-direction:column;justify-content:space-between;min-height:220px}.balance-card span,.card-title{color:#839183;font:10px var(--mono);letter-spacing:.08em}.balance-card strong{color:var(--green);font-size:42px;letter-spacing:-.07em}.balance-card small{color:#68766a;font:10px var(--mono)}.amount-grid{display:grid;grid-template-columns:1fr 1fr;gap:10px;margin:25px 0}.amount-grid button{height:49px;border:1px solid #3b503c;color:#b8c5b5;font:12px var(--mono);background:#0c160e;cursor:pointer}.amount-grid button.active,.amount-grid button:hover{border-color:var(--green);color:var(--green)}.topup-button{width:100%;height:49px;border:0;color:#111c0d;font-weight:700;background:var(--green);cursor:pointer}.topup-button span{float:right;font-size:18px}.wallet-status{min-height:15px;color:var(--green);font-size:11px;text-align:center}.wallet-note{margin-top:30px;color:#68766a;font:10px var(--mono)}@media(max-width:700px){.topbar nav{display:none}.topbar button{margin-left:auto}.wallet-shell{padding-top:55px}.wallet-grid{grid-template-columns:1fr;margin-top:48px}}
+/* ============================================================
+   CodeNest – wallet.css (Wallet Page)
+   Luxury Gold & Obsidian Black Theme
+   ============================================================ */
+
+.wallet-grid {
+  display: grid;
+  grid-template-columns: 1fr 1.35fr;
+  gap: 20px;
+  max-width: 1040px;
+  margin: 0 auto 28px;
+  padding: 0 6vw;
+}
+
+/* Balance Card */
+.balance-card {
+  display: flex;
+  flex-direction: column;
+  justify-content: space-between;
+  padding: 36px;
+  min-height: 230px;
+}
+.card-label {
+  font-size: 10px;
+  font-family: var(--mono);
+  letter-spacing: 0.16em;
+  color: var(--gold);
+  text-transform: uppercase;
+  font-weight: 500;
+}
+.balance-amount {
+  display: block;
+  font-size: 52px;
+  font-family: var(--mono);
+  font-weight: 800;
+  color: var(--gold-bright);
+  letter-spacing: -0.05em;
+  line-height: 1;
+  margin: 22px 0;
+  text-shadow: 0 0 35px var(--gold-glow);
+}
+.balance-footer {
+  display: flex;
+  align-items: center;
+  justify-content: space-between;
+}
+.balance-user {
+  font-size: 11px;
+  font-family: var(--mono);
+  color: var(--muted);
+  letter-spacing: 0.05em;
+}
+.refresh-btn {
+  width: 32px;
+  height: 32px;
+  border: 1px solid var(--border);
+  border-radius: var(--radius-sm);
+  background: rgba(14, 14, 18, 0.6);
+  color: var(--muted);
+  cursor: pointer;
+  display: grid;
+  place-items: center;
+  transition: var(--trans);
+}
+.refresh-btn:hover {
+  color: var(--gold-bright);
+  border-color: var(--gold-border-focus);
+  background: rgba(212, 175, 55, 0.1);
+  transform: rotate(45deg);
+}
+.refresh-btn.spinning svg {
+  animation: spin 0.7s linear infinite;
+}
+@keyframes spin {
+  to { transform: rotate(360deg); }
+}
+
+/* Topup Card */
+.topup-card {
+  padding: 36px;
+}
+.card-sub-title {
+  font-size: 13px;
+  color: var(--muted);
+  margin: 12px 0 22px;
+}
+
+.amount-grid {
+  display: grid;
+  grid-template-columns: 1fr 1fr;
+  gap: 12px;
+  margin-bottom: 22px;
+}
+.amount-btn {
+  height: 52px;
+  border: 1px solid var(--border);
+  border-radius: var(--radius-sm);
+  background: rgba(8, 8, 12, 0.65);
+  color: var(--ink-dim);
+  font-size: 14px;
+  font-family: var(--mono);
+  font-weight: 500;
+  cursor: pointer;
+  transition: var(--trans);
+}
+.amount-btn:hover {
+  border-color: var(--gold-border-focus);
+  color: var(--gold-light);
+  background: rgba(212, 175, 55, 0.08);
+  transform: translateY(-2px);
+}
+.amount-btn.active {
+  border-color: var(--gold-bright);
+  color: var(--gold-bright);
+  background: rgba(212, 175, 55, 0.14);
+  box-shadow: 0 0 20px rgba(212, 175, 55, 0.2);
+  transform: translateY(-1px);
+}
+
+.topup-btn {
+  margin-bottom: 12px;
+}
+
+/* Transfer Card */
+.transfer-card {
+  display: grid;
+  grid-template-columns: 1fr auto;
+  gap: 40px;
+  align-items: center;
+  max-width: 1040px;
+  margin: 0 auto 32px;
+  padding: 40px;
+}
+.transfer-card[hidden] {
+  display: none !important;
+}
+
+.transfer-title {
+  font-size: 26px;
+  font-weight: 700;
+  letter-spacing: -0.04em;
+  margin: 10px 0 12px;
+}
+.transfer-note {
+  font-size: 13px;
+  color: var(--muted);
+  line-height: 1.65;
+  max-width: 420px;
+  margin-bottom: 26px;
+}
+.transfer-details {
+  display: grid;
+  gap: 12px;
+}
+.detail-row {
+  display: flex;
+  justify-content: space-between;
+  align-items: center;
+  padding-bottom: 12px;
+  border-bottom: 1px solid var(--border);
+  font-size: 13px;
+  color: var(--muted);
+}
+.detail-row:last-child {
+  border-bottom: 0;
+  padding-bottom: 0;
+}
+.detail-row strong {
+  color: var(--ink);
+  font-weight: 500;
+  font-family: var(--mono);
+}
+.countdown {
+  color: var(--gold-bright) !important;
+  font-size: 15px;
+  text-shadow: 0 0 12px var(--gold-glow);
+}
+.countdown-row strong {
+  font-size: 16px;
+}
+
+.transfer-qr-wrap {
+  flex-shrink: 0;
+}
+.transfer-qr {
+  width: 210px;
+  height: 210px;
+  padding: 10px;
+  background: #ffffff;
+  border-radius: var(--radius);
+  box-shadow: 0 12px 32px rgba(0, 0, 0, 0.5), 0 0 24px rgba(212, 175, 55, 0.2);
+}
+
+.wallet-note {
+  max-width: 1040px;
+  margin: 0 auto 64px;
+  padding: 0 6vw;
+  font-size: 11px;
+  font-family: var(--mono);
+  color: #666675;
+  line-height: 1.6;
+}
+
+@media (max-width: 760px) {
+  .wallet-grid {
+    grid-template-columns: 1fr;
+    padding: 0 16px;
+  }
+  .transfer-card {
+    grid-template-columns: 1fr;
+    gap: 28px;
+    padding: 28px 20px;
+  }
+  .transfer-qr-wrap {
+    display: flex;
+    justify-content: center;
+  }
+  .wallet-note {
+    padding: 0 16px;
+  }
+}

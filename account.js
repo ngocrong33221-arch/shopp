@@ -1,33 +1,86 @@
-const musicScript = document.createElement('script');
-musicScript.src = 'web-effects.js';
-document.head.append(musicScript);
-const session = JSON.parse(sessionStorage.getItem('codenest_current_user') || 'null');
-if (!session) window.location.href = 'index.html';
-const selectionStyle = document.createElement('style');
-selectionStyle.textContent = '*{user-select:none;-webkit-user-select:none}input,textarea{user-select:text;-webkit-user-select:text}';
-document.head.append(selectionStyle);
-const accountsKey = 'codenest_accounts';
-const accounts = JSON.parse(localStorage.getItem(accountsKey) || '[]');
-const account = accounts.find((item) => item.username.toLowerCase() === session.username.toLowerCase());
-const balanceKey = `codenest_balance_${session.username}`;
-document.querySelector('#avatar').textContent = session.username.charAt(0).toUpperCase();
-document.querySelector('#accountName').textContent = session.username;
-document.querySelector('#accountEmail').textContent = session.username;
-document.querySelector('#accountRole').textContent = session.role === 'admin' ? 'Quản trị viên' : 'Thành viên';
-async function updateAccountBalance() { try { const response = await fetch(`http://127.0.0.1:5000/api/balances/${encodeURIComponent(session.username)}`); if (!response.ok) throw new Error('Balance request failed'); const data = await response.json(); localStorage.setItem(balanceKey, data.amount); document.querySelector('#accountBalance').textContent = `${Number(data.amount).toLocaleString('vi-VN')}đ`; } catch { document.querySelector('#accountBalance').textContent = `${Number(localStorage.getItem(balanceKey) || 0).toLocaleString('vi-VN')}đ`; } }
-updateAccountBalance();
-document.querySelector('#passwordForm').addEventListener('submit', (event) => {
-	event.preventDefault();
-	const status = document.querySelector('#passwordStatus');
-	const current = document.querySelector('#currentPassword').value;
-	const next = document.querySelector('#newPassword').value;
-	const confirm = document.querySelector('#confirmPassword').value;
-	if (!account || account.password !== current) { status.textContent = 'Mật khẩu hiện tại không đúng.'; return; }
-	if (next.length < 6) { status.textContent = 'Mật khẩu mới cần ít nhất 6 ký tự.'; return; }
-	if (next !== confirm) { status.textContent = 'Mật khẩu nhập lại chưa khớp.'; return; }
-	account.password = next;
-	localStorage.setItem(accountsKey, JSON.stringify(accounts));
-	status.textContent = 'Đã đổi mật khẩu thành công.';
-	event.target.reset();
+/* ============================================================
+   account.js — Account page logic
+   ============================================================ */
+
+const session = JSON.parse(sessionStorage.getItem('cn_session') || 'null');
+const ACCOUNTS_KEY = 'cn_accounts';
+
+/* ── Fill profile info ── */
+const accounts = JSON.parse(localStorage.getItem(ACCOUNTS_KEY) || '[]');
+const account  = accounts.find(a => a.username.toLowerCase() === session.username.toLowerCase());
+
+document.getElementById('avatar').textContent      = session.username.charAt(0).toUpperCase();
+document.getElementById('accountName').textContent = session.username;
+document.getElementById('accountEmail').textContent= session.username;
+document.getElementById('accountRole').textContent = session.role === 'admin' ? 'Quản trị viên' : 'Thành viên';
+
+// Member since date
+const createdAt = account?.createdAt ? new Date(account.createdAt) : null;
+document.getElementById('accountDate').textContent = createdAt
+  ? createdAt.toLocaleDateString('vi-VN', { year: 'numeric', month: 'long', day: 'numeric' })
+  : '—';
+
+/* ── Load balance ── */
+async function loadBalance() {
+  try {
+    const bal = await fetchBalance(session.username);
+    document.getElementById('accountBalance').textContent = bal.toLocaleString('vi-VN') + 'đ';
+  } catch {
+    document.getElementById('accountBalance').textContent = 'Không kết nối';
+  }
+}
+loadBalance();
+
+/* ── Password visibility toggles ── */
+document.querySelectorAll('.pw-toggle').forEach(btn => {
+  btn.addEventListener('click', () => {
+    const target = document.getElementById(btn.dataset.target);
+    const show   = target.type === 'password';
+    target.type  = show ? 'text' : 'password';
+    btn.style.color = show ? 'var(--gold-bright)' : '';
+  });
 });
-document.querySelector('#logoutButton').addEventListener('click', () => { sessionStorage.removeItem('codenest_current_user'); window.location.href = 'index.html'; });
+
+/* ── Password change ── */
+document.getElementById('passwordForm').addEventListener('submit', e => {
+  e.preventDefault();
+  const statusEl = document.getElementById('passwordStatus');
+  const current  = document.getElementById('currentPassword').value;
+  const next     = document.getElementById('newPassword').value;
+  const confirm  = document.getElementById('confirmPassword').value;
+
+  statusEl.className = 'form-status';
+
+  if (!account) {
+    statusEl.textContent = 'Không tìm thấy tài khoản trong hệ thống.';
+    statusEl.classList.add('err');
+    return;
+  }
+  if (session.username.toUpperCase() === 'ADM') {
+    statusEl.textContent = 'Không thể đổi mật khẩu admin từ đây.';
+    statusEl.classList.add('err');
+    return;
+  }
+  if (account.password !== current) {
+    statusEl.textContent = 'Mật khẩu hiện tại không đúng.';
+    statusEl.classList.add('err');
+    return;
+  }
+  if (next.length < 6) {
+    statusEl.textContent = 'Mật khẩu mới cần ít nhất 6 ký tự.';
+    statusEl.classList.add('err');
+    return;
+  }
+  if (next !== confirm) {
+    statusEl.textContent = 'Mật khẩu nhập lại chưa khớp.';
+    statusEl.classList.add('err');
+    return;
+  }
+
+  account.password = next;
+  localStorage.setItem(ACCOUNTS_KEY, JSON.stringify(accounts));
+  statusEl.textContent = '✓ Đã đổi mật khẩu thành công.';
+  statusEl.classList.add('ok');
+  e.target.reset();
+  showToast('Mật khẩu đã được cập nhật!');
+});

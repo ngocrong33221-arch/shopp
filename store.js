@@ -1,79 +1,179 @@
-const webEffectsScript = document.createElement('script');
-webEffectsScript.src = 'web-effects.js';
-document.head.append(webEffectsScript);
+/* ============================================================
+   store.js — Product marketplace logic
+   ============================================================ */
 
-const currentUser = JSON.parse(sessionStorage.getItem('codenest_current_user') || 'null');
-const userBadge = document.querySelector('#userBadge');
-const logoutButton = document.querySelector('#logoutButton');
-const toast = document.querySelector('#toast');
-const adminLink = document.querySelector('#adminLink');
+let customProducts = [];
+const grid = document.getElementById('productGrid');
+const statCount  = document.getElementById('statCount');
+const resultCount= document.getElementById('resultCount');
+const paymentModal = document.getElementById('paymentModal');
+const paymentFile = document.getElementById('paymentFile');
+const paymentPrice = document.getElementById('paymentPrice');
+const paymentBalance = document.getElementById('paymentBalance');
+const paymentAfter = document.getElementById('paymentAfter');
+const paymentStatus = document.getElementById('paymentStatus');
+const confirmPayment = document.getElementById('confirmPayment');
+let selectedProduct = null;
 
-if (!currentUser) {
-  window.location.href = 'index.html';
-} else {
-  userBadge.textContent = currentUser.username;
-  adminLink.hidden = currentUser.role !== 'admin';
+const API_BASE = window.location.protocol === 'file:' ? 'http://127.0.0.1:5000' : window.location.origin;
+
+/* Art color themes */
+const artThemes = ['art-lime', 'art-blue', 'art-purple', 'art-orange'];
+const artIcons  = ['&lt;/&gt;', '{ }', '( )', '#[]'];
+
+function renderProducts(list) {
+  grid.innerHTML = '';
+  if (!list.length) {
+    grid.innerHTML = `
+      <div class="empty-store">
+        <div class="empty-icon">&lt;/&gt;</div>
+        <h2>Chưa có sản phẩm</h2>
+        <p>Admin đang chuẩn bị những bộ code đầu tiên.</p>
+      </div>`;
+    return;
+  }
+  list.forEach((product, i) => {
+    const theme = artThemes[i % artThemes.length];
+    const icon  = artIcons[i % artIcons.length];
+    const card  = document.createElement('article');
+    card.className = 'product-card';
+    card.dataset.category = product.category || 'web';
+    card.style.animationDelay = (i * 0.07) + 's';
+    card.innerHTML = `
+      <div class="product-art ${theme}">
+        <div class="art-pattern"></div>
+        <span class="art-code">${icon}</span>
+      </div>
+      <div class="product-meta">
+        <span class="product-tag">${product.category || 'web'} · ${product.fileName || 'CODE FILE'}</span>
+        <h2 class="product-name"></h2>
+        <p class="product-desc"></p>
+        <div class="product-bottom">
+          <span class="product-price">${Number(product.price).toLocaleString('vi-VN')}đ</span>
+          <button class="buy-btn" type="button" data-id="${product.id}">
+            Mua
+            <svg width="13" height="13" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2.5"><line x1="12" y1="5" x2="12" y2="19"/><polyline points="19 12 12 19 5 12"/></svg>
+          </button>
+        </div>
+      </div>`;
+    card.querySelector('.product-name').textContent = product.name;
+    card.querySelector('.product-desc').textContent = product.description;
+    card.querySelector('.buy-btn').addEventListener('click', () => openPayment(product));
+    grid.append(card);
+  });
+  window.refreshHoverTargets?.();
 }
 
-function installNavLight() {
-  const nav = document.querySelector('.topbar nav');
-  if (!nav) return;
-  const style = document.createElement('style');
-  style.textContent = '.topbar nav{position:relative}.nav-light{position:absolute;bottom:-9px;left:0;z-index:2;width:30px;height:5px;overflow:visible;pointer-events:none;transition:transform .45s cubic-bezier(.2,.8,.2,1),width .45s}.nav-light rect{fill:#b9f36b;filter:drop-shadow(0 0 5px #6ee7ff)}.topbar nav a{position:relative;transition:color .3s}.topbar nav a.active{text-shadow:0 0 12px rgba(110,231,255,.55)}';
-  document.head.append(style);
-  const light = document.createElementNS('http://www.w3.org/2000/svg', 'svg');
-  light.classList.add('nav-light');
-  light.innerHTML = '<rect id="core" x="0" y="2" width="30" height="2" rx="1"></rect>';
-  nav.append(light);
-  const active = nav.querySelector('a.active');
-  if (active) {
-    light.style.width = `${active.offsetWidth}px`;
-    light.style.transform = `translateX(${active.offsetLeft}px)`;
+/* Filter tabs */
+document.querySelectorAll('.filter-tab').forEach(btn => {
+  btn.addEventListener('click', () => {
+    document.querySelector('.filter-tab.active').classList.remove('active');
+    btn.classList.add('active');
+    const cat = btn.dataset.filter;
+    const filtered = cat === 'all' ? customProducts : customProducts.filter(p => p.category === cat);
+    resultCount.textContent = String(filtered.length).padStart(2, '0');
+    renderProducts(filtered);
+  });
+});
+
+function money(value) {
+  return `${Number(value || 0).toLocaleString('vi-VN')}đ`;
+}
+
+async function openPayment(product) {
+  const session = JSON.parse(sessionStorage.getItem('cn_session') || 'null');
+  if (!session?.username) { showToast('Vui lòng đăng nhập để mua file.'); return; }
+  selectedProduct = product;
+  paymentFile.textContent = `${product.name} · ${product.fileName || 'file sản phẩm'}`;
+  paymentPrice.textContent = money(product.price);
+  paymentBalance.textContent = 'Đang kiểm tra...';
+  paymentAfter.textContent = '--';
+  paymentStatus.textContent = '';
+  paymentStatus.className = 'payment-status';
+  confirmPayment.disabled = true;
+  paymentModal.classList.add('show');
+  paymentModal.setAttribute('aria-hidden', 'false');
+
+  try {
+    const response = await fetch(`${API_BASE}/api/balances/${encodeURIComponent(session.username)}`);
+    if (!response.ok) throw new Error('balance failed');
+    const data = await response.json();
+    const balance = Number(data.amount || 0);
+    paymentBalance.textContent = money(balance);
+    paymentAfter.textContent = balance >= product.price ? money(balance - product.price) : 'Không đủ số dư';
+    confirmPayment.disabled = balance < product.price;
+    if (balance < product.price) {
+      paymentStatus.textContent = `Bạn cần nạp thêm ${money(product.price - balance)} để mua file này.`;
+      paymentStatus.classList.add('err');
+    }
+  } catch {
+    paymentBalance.textContent = 'Không kiểm tra được';
+    paymentStatus.textContent = 'Không thể kiểm tra số dư. Hãy thử lại.';
+    paymentStatus.classList.add('err');
   }
 }
-installNavLight();
 
-logoutButton.addEventListener('click', () => {
-  sessionStorage.removeItem('codenest_current_user');
-  window.location.href = 'index.html';
-});
+function closePayment() {
+  paymentModal.classList.remove('show');
+  paymentModal.setAttribute('aria-hidden', 'true');
+  selectedProduct = null;
+}
 
-document.querySelectorAll('.filter').forEach((filterButton) => {
-  filterButton.addEventListener('click', () => {
-    document.querySelector('.filter.active').classList.remove('active');
-    filterButton.classList.add('active');
-    const category = filterButton.dataset.filter;
-    document.querySelectorAll('.product-card').forEach((card) => {
-      card.hidden = category !== 'all' && card.dataset.category !== category;
-    });
+async function confirmSelectedPurchase() {
+  const product = selectedProduct;
+  const session = JSON.parse(sessionStorage.getItem('cn_session') || 'null');
+  if (!product || !session?.username) return;
+  confirmPayment.disabled = true;
+  paymentStatus.textContent = 'Đang xác nhận thanh toán...';
+  paymentStatus.className = 'payment-status';
+  const response = await fetch(`${API_BASE}/api/products/${encodeURIComponent(product.id)}/purchase`, {
+    method: 'POST',
+    headers: { 'Content-Type': 'application/json' },
+    body: JSON.stringify({ username: session.username }),
+  });
+  const data = await response.json();
+  if (!response.ok) {
+    paymentStatus.textContent = response.status === 402
+      ? `Số dư không đủ. Hãy nạp thêm ${money(Number(data.price) - Number(data.balance))}.`
+      : 'Không thể hoàn tất thanh toán.';
+    paymentStatus.classList.add('err');
+    confirmPayment.disabled = false;
+    return;
+  }
+  closePayment();
+  const link = document.createElement('a');
+  link.href = `${API_BASE}/api/products/${encodeURIComponent(product.id)}/download`;
+  link.download = product.fileName || 'code-file';
+  document.body.append(link);
+  link.click();
+  link.remove();
+  showToast(`✓ Đã mua và đang tải "${product.name}"...`);
+}
+
+document.getElementById('confirmPayment').addEventListener('click', () => {
+  confirmSelectedPurchase().catch(() => {
+    paymentStatus.textContent = 'Không thể kết nối máy chủ thanh toán.';
+    paymentStatus.classList.add('err');
+    confirmPayment.disabled = false;
   });
 });
+document.getElementById('closePayment').addEventListener('click', closePayment);
+document.querySelector('[data-close-payment]').addEventListener('click', closePayment);
+document.addEventListener('keydown', event => { if (event.key === 'Escape') closePayment(); });
 
-document.querySelectorAll('.buy-button').forEach((button) => {
-  button.addEventListener('click', () => {
-    toast.textContent = `${button.dataset.name} đã được thêm vào giỏ hàng.`;
-    toast.classList.add('show');
-    window.setTimeout(() => toast.classList.remove('show'), 2600);
-  });
-});
+async function loadProducts() {
+  try {
+    const response = await fetch(`${API_BASE}/api/products`);
+    if (!response.ok) throw new Error('products failed');
+    customProducts = await response.json();
+  } catch {
+    customProducts = [];
+    showToast('Không kết nối được máy chủ sản phẩm.');
+  }
+  const countStr = String(customProducts.length).padStart(2, '0');
+  statCount.textContent = countStr;
+  resultCount.textContent = countStr;
+  renderProducts(customProducts);
+}
 
-const customProducts = JSON.parse(localStorage.getItem('codenest_products') || '[]');
-function downloadCodeFile(product) {
-  if (!product.id) { toast.textContent = 'File này chưa được lưu để tải xuống.'; toast.classList.add('show'); window.setTimeout(() => toast.classList.remove('show'), 2600); return; }
-  const request = indexedDB.open('codenest_code_files', 1);
-  request.onsuccess = () => { const transaction = request.result.transaction('files', 'readonly'); const fileRequest = transaction.objectStore('files').get(product.id); fileRequest.onsuccess = () => { if (!fileRequest.result) { toast.textContent = 'Không tìm thấy file code.'; toast.classList.add('show'); return; } const url = URL.createObjectURL(fileRequest.result); const link = document.createElement('a'); link.href = url; link.download = product.fileName || 'code-file'; link.click(); URL.revokeObjectURL(url); }; };
-}
-document.querySelector('.result-label b').textContent = String(customProducts.length).padStart(2, '0');
-document.querySelector('.hero-stat strong').textContent = String(customProducts.length).padStart(2, '0');
-if (!customProducts.length) {
-  document.querySelector('#productGrid').innerHTML = '<div class="empty-store"><span>&lt;/&gt;</span><h2>Chưa có sản phẩm</h2><p>Admin đang chuẩn bị những bộ code đầu tiên.</p></div>';
-}
-customProducts.forEach((product) => {
-  const card = document.createElement('article');
-  card.className = 'product-card';
-  card.dataset.category = product.category || 'web';
-  card.innerHTML = `<div class="product-art custom-art"><span class="custom-file">&lt;/&gt;</span></div><div class="product-meta"><span class="tag">${product.fileName || 'CODE FILE'}</span><h2>${product.name}</h2><p>${product.description}</p><div class="product-bottom"><strong>${Number(product.price).toLocaleString('vi-VN')}đ</strong><button class="buy-button" type="button" data-name="${product.name}">Xem code <span>↗</span></button></div></div>`;
-  document.querySelector('#productGrid').append(card);
-  card.querySelector('.buy-button').textContent = 'Tải code ↘';
-  card.querySelector('.buy-button').addEventListener('click', () => downloadCodeFile(product));
-});
+loadProducts();

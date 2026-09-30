@@ -6,60 +6,151 @@
   <title>CodeNest | Đăng nhập</title>
   <link rel="preconnect" href="https://fonts.googleapis.com">
   <link rel="preconnect" href="https://fonts.gstatic.com" crossorigin>
-  <link href="https://fonts.googleapis.com/css2?family=DM+Mono:wght@400;500&family=Space+Grotesk:wght@400;500;600;700&display=swap" rel="stylesheet">
+  <link href="https://fonts.googleapis.com/css2?family=Inter:wght@300;400;500;600;700;800&family=JetBrains+Mono:wght@400;500&display=swap" rel="stylesheet">
   <link rel="stylesheet" href="app.css">
 </head>
 <body>
-  <div class="cursor" aria-hidden="true"></div>
-  <div class="blob blob-1" aria-hidden="true"></div>
-  <div class="blob blob-2" aria-hidden="true"></div>
-  <div class="blob blob-3" aria-hidden="true"></div>
-  <div class="stars" id="stars" aria-hidden="true"></div>
-  <div class="floor-glow" aria-hidden="true"></div>
-  <div class="light-core" aria-hidden="true"></div>
+  <!-- Background effects -->
+  <div class="bg-grid" aria-hidden="true"></div>
   <canvas id="particles" aria-hidden="true"></canvas>
-  <div class="vignette" aria-hidden="true"></div>
-  <div class="noise" aria-hidden="true"></div>
-  <svg id="lampSvg" viewBox="0 0 230 230" aria-hidden="true">
-    <defs><linearGradient id="rodGradient" x1="0" y1="0" x2="1" y2="1"><stop offset="0%" stop-color="#021a12"/><stop offset="35%" stop-color="#00ffc3"/><stop offset="60%" stop-color="#00aaff"/><stop offset="100%" stop-color="#021a12"/></linearGradient></defs>
-    <circle cx="115" cy="115" r="80" fill="none" stroke="url(#rodGradient)" stroke-width="2"/>
-  </svg>
-  <div class="ambient ambient-left" aria-hidden="true"></div>
-  <div class="ambient ambient-right" aria-hidden="true"></div>
-  <main class="page-shell">
-    <section class="intro" aria-label="Giới thiệu">
-      <a class="brand" href="#"><span class="brand-mark">&lt;/&gt;</span><span>codenest<span class="accent">.</span></span></a>
-      <div class="intro-copy">
-        <p class="eyebrow"><span class="eyebrow-line"></span> creative developer workspace</p>
-        <h1>Build ideas.<br><em>Ship</em> more.</h1>
-        <p class="intro-text">Không gian tập trung cho những người biến dòng code thành điều đáng nhớ.</p>
+  <div class="glow glow-1" aria-hidden="true"></div>
+  <div class="glow glow-2" aria-hidden="true"></div>
+  <div class="cursor" id="cursor" aria-hidden="true"></div>
+  <div class="cursor-dot" id="cursorDot" aria-hidden="true"></div>
+
+  <main class="auth-root" id="authRoot">
+    <!-- Left panel -->
+    <section class="auth-hero" aria-label="Giới thiệu">
+      <div class="hero-inner">
+        <a class="brand" href="#">
+          <div class="brand-icon">&lt;/&gt;</div>
+          <span class="brand-name">code<span class="accent">nest</span></span>
+        </a>
+        <div class="hero-copy" id="heroCopy">
+          <p class="hero-tag">Creative Developer Workspace</p>
+          <h1 class="hero-title">Build ideas.<br><span class="accent-text">Ship</span> more.</h1>
+          <p class="hero-desc">Không gian tập trung cho những người biến dòng code thành điều đáng nhớ.</p>
+        </div>
+        <div class="hero-stats">
+          <div class="stat-item">
+            <span class="stat-num">∞</span>
+            <span class="stat-label">Projects</span>
+          </div>
+          <div class="stat-divider"></div>
+          <div class="stat-item">
+            <span class="stat-num">24/7</span>
+            <span class="stat-label">Access</span>
+          </div>
+          <div class="stat-divider"></div>
+          <div class="stat-item">
+            <span class="stat-num">100%</span>
+            <span class="stat-label">Your code</span>
+          </div>
+        </div>
+        <p class="hero-copy-small">© 2026 CodeNest Studio</p>
       </div>
-      <p class="copyright">© 2026 CodeNest Studio</p>
+      <div class="hero-deco" aria-hidden="true">
+        <div class="deco-ring deco-ring-1"></div>
+        <div class="deco-ring deco-ring-2"></div>
+        <div class="deco-ring deco-ring-3"></div>
+        <div class="code-float code-float-1">
+          <span class="cf-kw">const</span> <span class="cf-var">idea</span> = <span class="cf-fn">new</span> <span class="cf-cls">Possibility</span>();
+        </div>
+        <div class="code-float code-float-2">
+          idea.<span class="cf-fn">ship</span>(<span class="cf-str">'something great'</span>);
+        </div>
+      </div>
     </section>
-    <section class="login-wrap" aria-label="Biểu mẫu đăng nhập">
-      <div class="code-panel code-panel-top" aria-hidden="true"><span>const <b>yourIdea</b> = new Possibility();</span><span class="indent">yourIdea.shape('something');</span></div>
-      <div class="login-card">
-        <p class="card-kicker" id="cardKicker">WELCOME BACK</p>
-        <h2 id="cardTitle">Đăng nhập<span class="accent">.</span></h2>
-        <p class="card-subtitle" id="cardSubtitle">Tiếp tục hành trình của bạn.</p>
-        <form id="loginForm" novalidate>
-          <label for="email" id="emailLabel">Email hoặc tên đăng nhập</label>
-          <div class="input-shell"><span class="input-icon">@</span><input id="email" type="text" placeholder="you@example.com" required></div>
-          <p class="field-error" id="emailError" role="alert"></p>
-          <div class="password-label-row"><label for="password">Mật khẩu</label><a href="#reset">Quên mật khẩu?</a></div>
-          <div class="input-shell"><span class="input-icon">*</span><input id="password" type="password" placeholder="Nhập mật khẩu" minlength="6" required><button class="toggle-password" type="button">show</button></div>
-          <p class="field-error" id="passwordError" role="alert"></p>
-          <label class="remember-row"><input type="checkbox"><span class="checkmark"></span><span>Ghi nhớ đăng nhập</span></label>
-          <button class="submit-button" type="submit"><span>Đăng nhập</span><span class="button-arrow">↗</span></button>
+
+    <!-- Right panel: login/signup card -->
+    <section class="auth-panel" aria-label="Xác thực">
+      <div class="auth-card" id="authCard">
+        <div class="card-header">
+          <span class="card-mode-tag" id="cardModeTag">WELCOME BACK</span>
+          <h2 class="card-title" id="cardTitle">Đăng nhập<span class="accent">.</span></h2>
+          <p class="card-sub" id="cardSub">Tiếp tục hành trình của bạn.</p>
+        </div>
+
+        <form id="loginForm" class="auth-form" novalidate>
+          <!-- Username/email field -->
+          <div class="field-group" id="fieldEmail">
+            <label class="field-label" for="emailInput" id="emailLabel">Email hoặc tên đăng nhập</label>
+            <div class="field-wrap">
+              <span class="field-icon">
+                <svg width="16" height="16" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2"><path d="M20 21v-2a4 4 0 0 0-4-4H8a4 4 0 0 0-4 4v2"/><circle cx="12" cy="7" r="4"/></svg>
+              </span>
+              <input id="emailInput" class="field-input" type="text" placeholder="you@example.com" autocomplete="username" required>
+            </div>
+            <p class="field-err" id="emailErr" role="alert"></p>
+          </div>
+
+          <!-- Password field -->
+          <div class="field-group">
+            <div class="field-label-row">
+              <label class="field-label" for="passwordInput">Mật khẩu</label>
+              <a class="field-link" href="#" id="forgotLink">Quên mật khẩu?</a>
+            </div>
+            <div class="field-wrap">
+              <span class="field-icon">
+                <svg width="16" height="16" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2"><rect x="3" y="11" width="18" height="11" rx="2"/><path d="M7 11V7a5 5 0 0 1 10 0v4"/></svg>
+              </span>
+              <input id="passwordInput" class="field-input" type="password" placeholder="Nhập mật khẩu" minlength="6" autocomplete="current-password" required>
+              <button class="toggle-pw" type="button" id="togglePw" aria-label="Hiện/ẩn mật khẩu">
+                <svg class="eye-open" width="16" height="16" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2"><path d="M1 12s4-8 11-8 11 8 11 8-4 8-11 8-11-8-11-8z"/><circle cx="12" cy="12" r="3"/></svg>
+                <svg class="eye-closed" width="16" height="16" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" style="display:none"><path d="M17.94 17.94A10.07 10.07 0 0 1 12 20c-7 0-11-8-11-8a18.45 18.45 0 0 1 5.06-5.94"/><path d="M9.9 4.24A9.12 9.12 0 0 1 12 4c7 0 11 8 11 8a18.5 18.5 0 0 1-2.16 3.19"/><line x1="1" y1="1" x2="23" y2="23"/></svg>
+              </button>
+            </div>
+            <p class="field-err" id="passwordErr" role="alert"></p>
+          </div>
+
+          <!-- Confirm password (signup only) -->
+          <div class="field-group" id="fieldConfirm" style="display:none;">
+            <label class="field-label" for="confirmInput">Nhập lại mật khẩu</label>
+            <div class="field-wrap">
+              <span class="field-icon">
+                <svg width="16" height="16" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2"><rect x="3" y="11" width="18" height="11" rx="2"/><path d="M7 11V7a5 5 0 0 1 10 0v4"/></svg>
+              </span>
+              <input id="confirmInput" class="field-input" type="password" placeholder="Nhập lại mật khẩu" minlength="6" autocomplete="new-password">
+            </div>
+            <p class="field-err" id="confirmErr" role="alert"></p>
+          </div>
+
+          <!-- Remember me (login only) -->
+          <label class="remember-row" id="rememberRow">
+            <input type="checkbox" id="rememberCheck" class="check-input">
+            <span class="checkmark"></span>
+            <span>Ghi nhớ đăng nhập</span>
+          </label>
+
+          <!-- Submit -->
+          <button class="submit-btn" type="submit" id="submitBtn">
+            <span id="submitLabel">Đăng nhập</span>
+            <svg width="18" height="18" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2.5"><line x1="5" y1="12" x2="19" y2="12"/><polyline points="12 5 19 12 12 19"/></svg>
+          </button>
+
           <p class="form-status" id="formStatus" role="status"></p>
         </form>
-        <div class="divider"><span>hoặc tiếp tục với</span></div>
-        <div class="social-row"><button class="social-button" type="button">G Google</button><button class="social-button" type="button">◉ GitHub</button></div>
-        <p class="signup-prompt" id="signupPrompt">Chưa có tài khoản? <a href="#signup">Tạo tài khoản →</a></p>
+
+        <div class="card-divider"><span>hoặc tiếp tục với</span></div>
+
+        <div class="social-btns">
+          <button class="social-btn" type="button">
+            <svg width="18" height="18" viewBox="0 0 24 24"><path fill="#EA4335" d="M5.266 9.765A7.077 7.077 0 0 1 12 4.909c1.69 0 3.218.6 4.418 1.582L19.91 3C17.782 1.145 15.055 0 12 0 7.27 0 3.198 2.698 1.24 6.65l4.026 3.115Z"/><path fill="#34A853" d="M16.04 18.013c-1.09.703-2.474 1.078-4.04 1.078a7.077 7.077 0 0 1-6.723-4.823l-4.04 3.067A11.965 11.965 0 0 0 12 24c2.933 0 5.735-1.043 7.834-3l-3.793-2.987Z"/><path fill="#4A90E2" d="M19.834 21c2.195-2.048 3.62-5.096 3.62-9 0-.71-.109-1.473-.272-2.182H12v4.637h6.436c-.317 1.559-1.17 2.766-2.395 3.558L19.834 21Z"/><path fill="#FBBC05" d="M5.277 14.268A7.12 7.12 0 0 1 4.909 12c0-.782.125-1.533.357-2.235L1.24 6.65A11.934 11.934 0 0 0 0 12c0 1.92.445 3.73 1.237 5.335l4.04-3.067Z"/></svg>
+            Google
+          </button>
+          <button class="social-btn" type="button">
+            <svg width="18" height="18" viewBox="0 0 24 24" fill="currentColor"><path d="M12 0C5.374 0 0 5.373 0 12c0 5.302 3.438 9.8 8.207 11.387.599.111.793-.261.793-.577v-2.234c-3.338.726-4.033-1.416-4.033-1.416-.546-1.387-1.333-1.756-1.333-1.756-1.089-.745.083-.729.083-.729 1.205.084 1.839 1.237 1.839 1.237 1.07 1.834 2.807 1.304 3.492.997.107-.775.418-1.305.762-1.604-2.665-.305-5.467-1.334-5.467-5.931 0-1.311.469-2.381 1.236-3.221-.124-.303-.535-1.524.117-3.176 0 0 1.008-.322 3.301 1.23A11.509 11.509 0 0 1 12 5.803c1.02.005 2.047.138 3.006.404 2.291-1.552 3.297-1.23 3.297-1.23.653 1.653.242 2.874.118 3.176.77.84 1.235 1.911 1.235 3.221 0 4.609-2.807 5.624-5.479 5.921.43.372.823 1.102.823 2.222v3.293c0 .319.192.694.801.576C20.566 21.797 24 17.3 24 12c0-6.627-5.373-12-12-12z"/></svg>
+            GitHub
+          </button>
+        </div>
+
+        <p class="toggle-mode" id="toggleMode">
+          Chưa có tài khoản? <a href="#" id="toggleLink">Tạo tài khoản →</a>
+        </p>
       </div>
-      <div class="code-panel code-panel-bottom" aria-hidden="true"><span>while (you.keepGoing()) {</span><span class="indent">return 'make it real';</span><span>}</span></div>
     </section>
   </main>
+
   <script src="app.js"></script>
 </body>
 </html>

@@ -1,76 +1,148 @@
-const webEffectsScript = document.createElement('script');
-webEffectsScript.src = 'web-effects.js';
-document.head.append(webEffectsScript);
+/* ============================================================
+   admin.js — Admin page logic
+   ============================================================ */
 
-const session = JSON.parse(sessionStorage.getItem('codenest_current_user') || 'null');
-if (!session || session.role !== 'admin') window.location.href = 'store.html';
-document.querySelector('.admin-heading .eyebrow').textContent = 'KHU VỰC NGƯỜI BÁN';
-document.querySelector('.admin-heading p:last-child').textContent = 'Đăng bán template, UI kit và hiệu ứng code để kiếm tiền từ sản phẩm bạn tạo ra.';
-const accountLink = document.createElement('a');
-accountLink.href = 'account.html';
-accountLink.textContent = 'Tài khoản';
-document.querySelector('.topbar nav').append(accountLink);
-function installNavLight() { const nav = document.querySelector('.topbar nav'); if (!nav) return; const style = document.createElement('style'); style.textContent = '.topbar nav{position:relative}.nav-light{position:absolute;bottom:-29px;left:0;width:30px;height:5px;overflow:visible;pointer-events:none;transition:transform .45s cubic-bezier(.2,.8,.2,1),width .45s}.nav-light rect{fill:#b9f36b;filter:drop-shadow(0 0 5px #6ee7ff)}.topbar nav a{position:relative;transition:color .3s}'; document.head.append(style); const light = document.createElementNS('http://www.w3.org/2000/svg', 'svg'); light.classList.add('nav-light'); light.innerHTML = '<rect id="core" x="0" y="2" width="30" height="2" rx="1"></rect>'; nav.append(light); const active = nav.querySelector('a.active'); if (active) { light.style.width = `${active.offsetWidth}px`; light.style.transform = `translateX(${active.offsetLeft}px)`; } }
-installNavLight();
-const form = document.querySelector('#productForm');
-const fileInput = document.querySelector('#productFile');
-const fileLabel = document.querySelector('#fileLabel');
-const fileDrop = document.querySelector('.file-drop');
-const status = document.querySelector('#formStatus');
-const previewName = document.querySelector('#previewName');
-const previewDescription = document.querySelector('#previewDescription');
-const previewPrice = document.querySelector('#previewPrice');
-const nameInput = document.querySelector('#productName');
-const descriptionInput = document.querySelector('#productDescription');
-const priceInput = document.querySelector('#productPrice');
-const codeDatabase = 'codenest_code_files';
-const allowedCodeExtensions = ['.zip', '.jar', '.html', '.css', '.js', '.json'];
-fileInput.accept = '.zip,application/zip,application/x-zip-compressed,.jar,application/java-archive,.html,.css,.js,.json';
-fileDrop.querySelector('small').textContent = 'ZIP, JAR, HTML, CSS, JS · không giới hạn dung lượng';
-fileInput.style.display = 'none';
-fileDrop.addEventListener('click', (event) => { event.preventDefault(); fileInput.click(); });
-fileDrop.addEventListener('dragover', (event) => { event.preventDefault(); fileDrop.style.borderColor = '#b9f36b'; fileDrop.style.background = 'rgba(185,243,107,.08)'; });
-fileDrop.addEventListener('dragleave', () => { fileDrop.style.borderColor = ''; fileDrop.style.background = ''; });
-fileDrop.addEventListener('drop', (event) => { event.preventDefault(); fileDrop.style.borderColor = ''; fileDrop.style.background = ''; fileInput.files = event.dataTransfer.files; fileInput.dispatchEvent(new Event('change')); });
-function saveCodeFile(id, file) {
-	return new Promise((resolve, reject) => {
-		const request = indexedDB.open(codeDatabase, 1);
-		request.onupgradeneeded = () => request.result.createObjectStore('files');
-		request.onsuccess = () => { const transaction = request.result.transaction('files', 'readwrite'); transaction.objectStore('files').put(file, id); transaction.oncomplete = resolve; transaction.onerror = () => reject(transaction.error); };
-		request.onerror = () => reject(request.error);
-	});
+const session = JSON.parse(sessionStorage.getItem('cn_session') || 'null');
+if (!session || session.role !== 'admin') navigate('store.html');
+
+const form        = document.getElementById('productForm');
+const fileInput   = document.getElementById('productFile');
+const fileDrop    = document.getElementById('fileDrop');
+const fileLabel   = document.getElementById('fileLabel');
+const statusEl    = document.getElementById('formStatus');
+const previewName = document.getElementById('previewName');
+const previewDesc = document.getElementById('previewDescription');
+const previewPrc  = document.getElementById('previewPrice');
+const nameInput   = document.getElementById('productName');
+const descInput   = document.getElementById('productDescription');
+const priceInput  = document.getElementById('productPrice');
+
+const API_BASE = window.location.protocol === 'file:' ? 'http://127.0.0.1:5000' : window.location.origin;
+
+/* ── File drop zone ── */
+fileDrop.addEventListener('dragover',  e => { e.preventDefault(); fileDrop.classList.add('dragover'); });
+fileDrop.addEventListener('dragleave', () => fileDrop.classList.remove('dragover'));
+fileDrop.addEventListener('drop', e => {
+  e.preventDefault();
+  fileDrop.classList.remove('dragover');
+  fileInput.files = e.dataTransfer.files;
+  fileInput.dispatchEvent(new Event('change'));
+});
+fileInput.addEventListener('change', () => {
+  const f = fileInput.files[0];
+  fileLabel.textContent = f ? `${f.name} · đã nhận` : 'Chọn hoặc kéo thả file code vào đây';
+});
+
+/* ── Live preview ── */
+nameInput.addEventListener('input',  () => { previewName.textContent = nameInput.value  || 'Tên sản phẩm của bạn'; });
+descInput.addEventListener('input',  () => { previewDesc.textContent = descInput.value  || 'Mô tả ngắn sẽ xuất hiện ở đây.'; });
+priceInput.addEventListener('input', () => { previewPrc.textContent  = `${Number(priceInput.value || 0).toLocaleString('vi-VN')}đ`; });
+
+/* ── Submit ── */
+form.addEventListener('submit', async e => {
+  e.preventDefault();
+  const file = fileInput.files[0];
+  if (!file) { statusEl.textContent = 'Hãy chọn file muốn đăng.'; statusEl.className = 'form-status err'; return; }
+
+  const product = {
+    id:          `${Date.now()}-${Math.random().toString(36).slice(2)}`,
+    name:        nameInput.value.trim(),
+    description: descInput.value.trim(),
+    price:       Number(priceInput.value),
+    category:    document.getElementById('productCategory').value,
+    fileName:    file.name,
+    createdAt:   new Date().toISOString()
+  };
+
+  const btn = document.getElementById('uploadBtn');
+  btn.disabled = true;
+  statusEl.textContent = 'Đang tải file lên máy chủ...';
+  statusEl.className = 'form-status ok';
+
+  try {
+    const body = new FormData();
+    body.append('name', product.name);
+    body.append('description', product.description);
+    body.append('price', String(product.price));
+    body.append('category', product.category);
+    body.append('file', file, file.name);
+    const response = await fetch(`${API_BASE}/api/products`, { method: 'POST', body });
+    if (!response.ok) throw new Error('upload failed');
+    statusEl.textContent = '✓ Đã đăng sản phẩm thành công!';
+    statusEl.className = 'form-status ok';
+    form.reset();
+    fileLabel.textContent = 'Chọn hoặc kéo thả file code vào đây';
+    previewName.textContent = 'Tên sản phẩm của bạn';
+    previewDesc.textContent = 'Mô tả ngắn sẽ xuất hiện ở đây.';
+    previewPrc.textContent  = '0đ';
+    showToast('Sản phẩm đã được đăng thành công!');
+    renderInventory();
+  } catch {
+    statusEl.textContent = 'Không thể lưu file. Kiểm tra dung lượng trình duyệt.';
+    statusEl.className = 'form-status err';
+  } finally {
+    btn.disabled = false;
+  }
+});
+
+/* ── Render inventory ── */
+async function renderInventory() {
+  let products = [];
+  try {
+    const response = await fetch(`${API_BASE}/api/products`);
+    if (!response.ok) throw new Error('products failed');
+    products = await response.json();
+  } catch {
+    statusEl.textContent = 'Không kết nối được máy chủ. Hãy chạy backend trước.';
+    statusEl.className = 'form-status err';
+  }
+  const inv   = document.getElementById('productInventory');
+  const count = document.getElementById('productCount');
+  count.textContent = `${products.length} sản phẩm`;
+  inv.innerHTML = '';
+
+  if (!products.length) {
+    inv.innerHTML = `
+      <div class="empty-inventory">
+        <span>&lt;/&gt;</span>
+        <strong>Chưa có sản phẩm nào</strong>
+        <p>Sản phẩm bạn đăng sẽ xuất hiện ở đây.</p>
+      </div>`;
+    return;
+  }
+
+  products.forEach((p, i) => {
+    const item = document.createElement('article');
+    item.className = 'inventory-item';
+    item.style.animationDelay = (i * .06) + 's';
+    item.innerHTML = `
+      <div class="inv-item-info">
+        <span class="inv-cat">${p.category || 'web'} · ${p.fileName || 'CODE'}</span>
+        <h3 class="inv-name"></h3>
+        <p class="inv-desc"></p>
+      </div>
+      <div class="inv-actions">
+        <span class="inv-price">${Number(p.price).toLocaleString('vi-VN')}đ</span>
+        <button class="delete-btn" type="button">Xóa</button>
+      </div>`;
+    item.querySelector('.inv-name').textContent = p.name;
+    item.querySelector('.inv-desc').textContent = p.description;
+    item.querySelector('.delete-btn').addEventListener('click', () => {
+      if (!confirm(`Xóa sản phẩm "${p.name}"?`)) return;
+      fetch(`${API_BASE}/api/products/${encodeURIComponent(p.id)}`, { method: 'DELETE' })
+        .then(response => {
+          if (!response.ok) throw new Error('delete failed');
+          showToast(`Đã xóa "${p.name}"`);
+          renderInventory();
+        })
+        .catch(() => {
+          statusEl.textContent = 'Không thể xóa sản phẩm trên máy chủ.';
+          statusEl.className = 'form-status err';
+        });
+    });
+    inv.append(item);
+  });
+  window.refreshHoverTargets?.();
 }
-const inventory = document.createElement('section');
-inventory.className = 'inventory-panel';
-inventory.innerHTML = '<div class="inventory-heading"><div><p class="card-top">02 / YOUR PRODUCTS</p><h2>Sản phẩm đã đăng</h2></div><span id="productCount">0 sản phẩm</span></div><div class="product-inventory" id="productInventory"></div>';
-document.querySelector('.admin-shell').append(inventory);
-const productInventory = inventory.querySelector('#productInventory');
-const productCount = inventory.querySelector('#productCount');
 
-function renderInventory() {
-	const products = JSON.parse(localStorage.getItem('codenest_products') || '[]');
-	productCount.textContent = `${products.length} sản phẩm`;
-	productInventory.innerHTML = products.length ? '' : '<div class="empty-inventory"><span>&lt;/&gt;</span><strong>Chưa có sản phẩm nào</strong><p>Sản phẩm bạn đăng sẽ xuất hiện ở đây.</p></div>';
-	products.forEach((product, index) => {
-		const item = document.createElement('article');
-		item.className = 'inventory-item';
-		item.innerHTML = `<div><span class="inventory-category">${product.category || 'web'} · ${product.fileName || 'CODE FILE'}</span><h3></h3><p></p></div><div class="inventory-actions"><strong>${Number(product.price).toLocaleString('vi-VN')}đ</strong><button type="button" aria-label="Xóa sản phẩm">Xóa</button></div>`;
-		item.querySelector('h3').textContent = product.name;
-		item.querySelector('p').textContent = product.description;
-		item.querySelector('button').addEventListener('click', () => {
-			if (!window.confirm(`Xóa sản phẩm "${product.name}"?`)) return;
-			products.splice(index, 1);
-			localStorage.setItem('codenest_products', JSON.stringify(products));
-			renderInventory();
-		});
-		productInventory.append(item);
-	});
-}
-
-fileInput.addEventListener('change', () => { const file = fileInput.files[0]; if (!file) { fileLabel.textContent = 'Chọn file code để tải lên'; return; } fileLabel.textContent = `${file.name} · đã nhận`; });
-nameInput.addEventListener('input', () => { previewName.textContent = nameInput.value || 'Tên sản phẩm của bạn'; });
-descriptionInput.addEventListener('input', () => { previewDescription.textContent = descriptionInput.value || 'Mô tả ngắn sẽ xuất hiện ở đây.'; });
-priceInput.addEventListener('input', () => { previewPrice.textContent = `${Number(priceInput.value || 0).toLocaleString('vi-VN')}đ`; });
-form.addEventListener('submit', async (event) => { event.preventDefault(); const file = fileInput.files[0]; const extension = file ? `.${file.name.split('.').pop().toLowerCase()}` : ''; if (!file) { status.textContent = 'Hãy chọn file code, có thể dùng file ZIP hoặc JAR.'; return; } if (!allowedCodeExtensions.includes(extension)) { status.textContent = 'Chỉ nhận file ZIP, JAR, HTML, CSS, JS hoặc JSON.'; return; } const product = { id: `${Date.now()}-${Math.random().toString(36).slice(2)}`, name: nameInput.value.trim(), description: descriptionInput.value.trim(), price: Number(priceInput.value), category: document.querySelector('#productCategory').value, fileName: file.name, createdAt: new Date().toISOString() }; const products = JSON.parse(localStorage.getItem('codenest_products') || '[]'); status.textContent = 'Đang nhận và lưu file code...'; try { await saveCodeFile(product.id, file); products.push(product); localStorage.setItem('codenest_products', JSON.stringify(products)); status.textContent = extension === '.zip' ? 'Đã nhận file ZIP và đăng sản phẩm thành công.' : extension === '.jar' ? 'Đã nhận file JAR và đăng sản phẩm thành công.' : 'Đã đăng sản phẩm và sẵn sàng cho người mua tải xuống.'; form.reset(); fileLabel.textContent = 'Chọn file code để tải lên'; renderInventory(); } catch { status.textContent = 'Không thể lưu file. Kiểm tra dung lượng trống của trình duyệt.'; } });
-document.querySelector('#logoutButton').addEventListener('click', () => { sessionStorage.removeItem('codenest_current_user'); window.location.href = 'index.html'; });
 renderInventory();

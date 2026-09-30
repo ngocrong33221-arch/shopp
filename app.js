@@ -1,124 +1,577 @@
-const form = document.querySelector('#loginForm');
-const musicScript = document.createElement('script');
-musicScript.src = 'web-effects.js';
-document.head.append(musicScript);
-const loginEffectStyle = document.createElement('style');
-loginEffectStyle.textContent = '.page-shell{position:relative;z-index:1}.page-shell::before{position:fixed;inset:0;z-index:-1;content:"";pointer-events:none;background:linear-gradient(180deg,transparent 0%,rgba(0,255,195,.045) 49%,transparent 51%);background-size:100% 190px;animation:loginScan 10s linear infinite}@keyframes loginScan{to{background-position:0 190px}}.login-card,.code-panel{animation-delay:.12s}.submit-button{animation:loginPulse 3s ease-in-out infinite}@keyframes loginPulse{50%{box-shadow:0 0 24px rgba(0,255,195,.22)}}@media(prefers-reduced-motion:reduce){.submit-button,.page-shell::before{animation:none}}';
-document.head.append(loginEffectStyle);
-const cursor = document.querySelector('.cursor');
-const stars = document.querySelector('#stars');
-const canvas = document.querySelector('#particles');
-if (cursor) document.addEventListener('mousemove', (event) => { cursor.style.left = `${event.clientX}px`; cursor.style.top = `${event.clientY}px`; });
-document.querySelectorAll('button').forEach((button) => {
-	button.addEventListener('mouseenter', () => { if (cursor) { cursor.style.width = '54px'; cursor.style.height = '54px'; } });
-	button.addEventListener('mouseleave', () => { if (cursor) { cursor.style.width = '24px'; cursor.style.height = '24px'; } });
-});
-if (stars) for (let index = 0; index < 100; index += 1) { const star = document.createElement('div'); star.className = 'star'; const size = Math.random() * 2 + 1; star.style.left = `${Math.random() * 100}%`; star.style.top = `${Math.random() * 100}%`; star.style.width = `${size}px`; star.style.height = `${size}px`; star.style.animationDelay = `${Math.random() * 4}s`; stars.append(star); }
-if (canvas) {
-	const context = canvas.getContext('2d');
-	let particles = [];
-	const resizeCanvas = () => { canvas.width = window.innerWidth; canvas.height = window.innerHeight; };
-	const createParticle = () => ({ x: Math.random() * canvas.width, y: Math.random() * canvas.height, size: Math.random() * 1.8 + .3, speedX: (Math.random() - .5) * .3, speedY: (Math.random() - .5) * .3, alpha: Math.random() });
-	const animateParticles = () => { context.clearRect(0, 0, canvas.width, canvas.height); particles.forEach((particle) => { particle.x = (particle.x + particle.speedX + canvas.width) % canvas.width; particle.y = (particle.y + particle.speedY + canvas.height) % canvas.height; context.beginPath(); context.arc(particle.x, particle.y, particle.size, 0, Math.PI * 2); context.fillStyle = `rgba(0,255,195,${particle.alpha})`; context.shadowBlur = 10; context.shadowColor = '#00ffc3'; context.fill(); }); requestAnimationFrame(animateParticles); };
-	resizeCanvas(); window.addEventListener('resize', resizeCanvas); particles = Array.from({ length: 110 }, createParticle); animateParticles();
-}
-const email = document.querySelector('#email');
-const password = document.querySelector('#password');
-const emailError = document.querySelector('#emailError');
-const passwordError = document.querySelector('#passwordError');
-const status = document.querySelector('#formStatus');
-const toggle = document.querySelector('.toggle-password');
-const cardKicker = document.querySelector('#cardKicker');
-const cardTitle = document.querySelector('#cardTitle');
-const cardSubtitle = document.querySelector('#cardSubtitle');
-const emailLabel = document.querySelector('#emailLabel');
-const signupPrompt = document.querySelector('#signupPrompt');
-const accountsKey = 'codenest_accounts';
-const adminAccount = { username: 'ADM', password: '0339171213a', role: 'admin' };
-let signupMode = false;
+/* ============================================================
+   CodeNest – app.js (Luxury Gold & Obsidian Black Auth Page)
+   Particle System, Mouse Sparkle Trail, Click Bursts & Page Transitions
+   ============================================================ */
 
-function getAccounts() {
-	let accounts = [];
-	try {
-		accounts = JSON.parse(localStorage.getItem(accountsKey)) || [];
-	} catch {
-		accounts = [];
-	}
-	if (!accounts.some((account) => account.username.toLowerCase() === adminAccount.username.toLowerCase())) {
-		accounts.unshift(adminAccount);
-		saveAccounts(accounts);
-	}
-	return accounts;
+/* ── 0. Load Background Music Player ── */
+(function loadMusic() {
+  const s = document.createElement('script');
+  s.src = 'web-effects.js';
+  document.body.append(s);
+})();
+
+/* ── 1. Golden Falling Particle Rain & Interactive Mouse Physics Engine ── */
+const canvas = document.getElementById('particles');
+const ctx = canvas.getContext('2d');
+let W = 0, H = 0;
+const pts = [];
+const mousePos = { x: -9999, y: -9999, prevX: -9999, prevY: -9999, vx: 0, vy: 0 };
+
+function resize() {
+  W = canvas.width = window.innerWidth;
+  H = canvas.height = window.innerHeight;
+}
+resize();
+window.addEventListener('resize', resize);
+
+function createFallingParticle(fromTop = false) {
+  const isStar = Math.random() < 0.25;
+  const isEmber = Math.random() < 0.45;
+  return {
+    x: Math.random() * W,
+    y: fromTop ? -25 - Math.random() * 50 : Math.random() * H,
+    radius: isStar ? (Math.random() * 2.2 + 1.8) : (Math.random() * 2.0 + 0.6),
+    isStar: isStar,
+    isEmber: isEmber,
+    rotation: Math.random() * Math.PI * 2,
+    rotationSpeed: (Math.random() - 0.5) * 0.04,
+    fallSpeed: Math.random() * 1.6 + 0.8,
+    swayAngle: Math.random() * Math.PI * 2,
+    swaySpeed: Math.random() * 0.025 + 0.015,
+    swayRadius: Math.random() * 0.9 + 0.3,
+    extraVx: 0,
+    extraVy: 0,
+    alpha: Math.random() * 0.65 + 0.3,
+    glow: Math.random() * 16 + 6,
+    color: Math.random() > 0.35 ? '#ffd700' : (Math.random() > 0.5 ? '#fff3b0' : '#f59e0b'),
+    pulseSpeed: Math.random() * 0.03 + 0.015,
+    pulseOffset: Math.random() * Math.PI * 2
+  };
 }
 
-function saveAccounts(accounts) {
-	localStorage.setItem(accountsKey, JSON.stringify(accounts));
+function drawStar(c, x, y, outerR, innerR, rot) {
+  let r = rot;
+  const step = Math.PI / 4;
+  c.beginPath();
+  for (let i = 0; i < 4; i++) {
+    c.lineTo(x + Math.cos(r) * outerR, y + Math.sin(r) * outerR);
+    r += step;
+    c.lineTo(x + Math.cos(r) * innerR, y + Math.sin(r) * innerR);
+    r += step;
+  }
+  c.closePath();
+  c.fill();
 }
 
-function setSignupMode(enabled) {
-	signupMode = enabled;
-	email.value = '';
-	password.value = '';
-	cardKicker.textContent = enabled ? 'JOIN CODENEST' : 'WELCOME BACK';
-	cardTitle.innerHTML = enabled ? 'Tạo tài khoản<span class="accent">.</span>' : 'Đăng nhập<span class="accent">.</span>';
-	cardSubtitle.textContent = enabled ? 'Bắt đầu hành trình của bạn.' : 'Tiếp tục hành trình của bạn.';
-	emailLabel.textContent = enabled ? 'Email' : 'Email hoặc tên đăng nhập';
-	email.type = enabled ? 'email' : 'text';
-	email.placeholder = enabled ? 'you@example.com' : 'you@example.com';
-	signupPrompt.innerHTML = enabled ? 'Đã có tài khoản? <a href="#login">Đăng nhập →</a>' : 'Chưa có tài khoản? <a href="#signup">Tạo tài khoản →</a>';
+for (let i = 0; i < 145; i++) {
+  pts.push(createFallingParticle(false));
 }
 
-signupPrompt.addEventListener('click', (event) => {
-	if (event.target.tagName === 'A') {
-		event.preventDefault();
-		setSignupMode(!signupMode);
-		clearMessages();
-	}
-});
-
-function clearMessages() {
-	emailError.textContent = '';
-	passwordError.textContent = '';
-	status.textContent = '';
-}
-
-toggle.addEventListener('click', () => {
-	const show = password.type === 'password';
-	password.type = show ? 'text' : 'password';
-	toggle.textContent = show ? 'hide' : 'show';
+// On Click: Radial Shockwave Blast pushing falling particles
+window.addEventListener('mousedown', e => {
+  for (let i = 0; i < pts.length; i++) {
+    const p = pts[i];
+    const dx = p.x - e.clientX;
+    const dy = p.y - e.clientY;
+    const dist = Math.sqrt(dx * dx + dy * dy);
+    if (dist < 260 && dist > 0) {
+      const force = (1 - dist / 260) * 18;
+      p.extraVx += (dx / dist) * force;
+      p.extraVy += (dy / dist) * force;
+    }
+  }
 });
 
-form.addEventListener('submit', (event) => {
-	event.preventDefault();
-	clearMessages();
-	let valid = true;
-	if (signupMode ? !email.validity.valid : !email.value.trim()) { emailError.textContent = signupMode ? 'Vui lòng nhập email hợp lệ.' : 'Vui lòng nhập tài khoản.'; valid = false; }
-	if (password.value.length < 6) { passwordError.textContent = 'Mật khẩu cần ít nhất 6 ký tự.'; valid = false; }
-	if (!valid) return;
+let tickCount = 0;
+function animateParticles() {
+  ctx.clearRect(0, 0, W, H);
+  tickCount++;
 
-	const accounts = getAccounts();
-	if (signupMode) {
-		if (accounts.some((account) => account.username.toLowerCase() === email.value.trim().toLowerCase())) {
-			emailError.textContent = 'Tài khoản này đã tồn tại.';
-			return;
-		}
-		accounts.push({ username: email.value.trim(), password: password.value, role: 'user', createdAt: new Date().toISOString() });
-		saveAccounts(accounts);
-		sessionStorage.setItem('codenest_current_user', JSON.stringify({ username: email.value.trim(), role: 'user' }));
-		window.location.href = 'store.html';
-		return;
-	}
+  mousePos.vx *= 0.88;
+  mousePos.vy *= 0.88;
 
-	const username = email.value.trim();
-	const account = username.toLowerCase() === adminAccount.username.toLowerCase() && password.value === adminAccount.password
-		? adminAccount
-		: accounts.find((item) => item.username.toLowerCase() === username.toLowerCase() && item.password === password.value);
-	if (account) {
-		sessionStorage.setItem('codenest_current_user', JSON.stringify({ username: account.username, role: account.role }));
-		window.location.href = 'store.html';
-	} else {
-		status.textContent = 'Tài khoản hoặc mật khẩu không đúng.';
-	}
+  // Draw connecting gold laser/lightning beams to cursor when particles are near mouse
+  for (let i = 0; i < pts.length; i++) {
+    const p = pts[i];
+    const mdx = p.x - mousePos.x;
+    const mdy = p.y - mousePos.y;
+    const mDist = Math.sqrt(mdx * mdx + mdy * mdy);
+
+    if (mDist < 135) {
+      const beamAlpha = (1 - mDist / 135) * 0.45;
+      ctx.beginPath();
+      ctx.moveTo(p.x, p.y);
+      ctx.lineTo(mousePos.x, mousePos.y);
+      ctx.strokeStyle = `rgba(255, 215, 0, ${beamAlpha})`;
+      ctx.lineWidth = (1 - mDist / 135) * 1.5 + 0.5;
+      ctx.stroke();
+    }
+  }
+
+  // Draw connecting gold threads between close particles
+  for (let i = 0; i < pts.length; i++) {
+    for (let j = i + 1; j < pts.length; j++) {
+      const dx = pts[i].x - pts[j].x;
+      const dy = pts[i].y - pts[j].y;
+      const dist = Math.sqrt(dx * dx + dy * dy);
+      if (dist < 85) {
+        const lineAlpha = (1 - dist / 85) * 0.1 * pts[i].alpha;
+        ctx.beginPath();
+        ctx.moveTo(pts[i].x, pts[i].y);
+        ctx.lineTo(pts[j].x, pts[j].y);
+        ctx.strokeStyle = `rgba(212, 175, 55, ${lineAlpha})`;
+        ctx.lineWidth = 0.65;
+        ctx.stroke();
+      }
+    }
+  }
+
+  // Update and draw falling particles
+  for (let i = 0; i < pts.length; i++) {
+    const p = pts[i];
+
+    p.swayAngle += p.swaySpeed;
+    p.rotation += p.rotationSpeed;
+    p.extraVx *= 0.93;
+    p.extraVy *= 0.93;
+
+    p.x += Math.sin(p.swayAngle) * p.swayRadius + p.extraVx;
+    p.y += p.fallSpeed + p.extraVy;
+
+    // Mouse continuous soft repulsion / force field
+    const mdx = p.x - mousePos.x;
+    const mdy = p.y - mousePos.y;
+    const mDist = Math.sqrt(mdx * mdx + mdy * mdy);
+    if (mDist < 110 && mDist > 0) {
+      const repel = (1 - mDist / 110) * 1.6;
+      p.extraVx += (mdx / mDist) * repel;
+      p.extraVy += (mdy / mDist) * repel;
+    }
+
+    // Boundaries wrap & respawn at top
+    if (p.y > H + 25) {
+      Object.assign(p, createFallingParticle(true));
+    }
+    if (p.x < -30) p.x = W + 20;
+    if (p.x > W + 30) p.x = -20;
+
+    let currentAlpha = Math.max(0.12, p.alpha + Math.sin(tickCount * p.pulseSpeed + p.pulseOffset) * 0.22);
+    let currentGlow = p.glow;
+    if (mDist < 135) {
+      currentAlpha = Math.min(1, currentAlpha + (1 - mDist / 135) * 0.5);
+      currentGlow += (1 - mDist / 135) * 14;
+    }
+
+    ctx.save();
+    ctx.shadowBlur = currentGlow;
+    ctx.shadowColor = '#ffd700';
+    ctx.fillStyle = p.color;
+    ctx.globalAlpha = currentAlpha;
+
+    if (p.isStar) {
+      drawStar(ctx, p.x, p.y, p.radius * 2, p.radius * 0.45, p.rotation);
+    } else {
+      ctx.beginPath();
+      ctx.arc(p.x, p.y, p.radius, 0, Math.PI * 2);
+      ctx.fill();
+
+      if (p.isEmber) {
+        ctx.beginPath();
+        ctx.arc(p.x, p.y, p.radius * 0.45, 0, Math.PI * 2);
+        ctx.fillStyle = '#ffffff';
+        ctx.fill();
+      }
+    }
+    ctx.restore();
+  }
+
+  requestAnimationFrame(animateParticles);
+}
+animateParticles();
+
+/* ── 2. Luxury Custom Cursor & Mouse Move Trail ── */
+const cursor = document.getElementById('cursor');
+const cursorDot = document.getElementById('cursorDot');
+let cx = -100, cy = -100;
+let mx = -100, my = -100;
+let lastTrailTime = 0;
+
+document.addEventListener('mousemove', e => {
+  mx = e.clientX;
+  my = e.clientY;
+
+  if (mousePos.prevX !== -9999) {
+    mousePos.vx = e.clientX - mousePos.prevX;
+    mousePos.vy = e.clientY - mousePos.prevY;
+  }
+  mousePos.prevX = e.clientX;
+  mousePos.prevY = e.clientY;
+  mousePos.x = mx;
+  mousePos.y = my;
+
+  // Apply wind turbulence to nearby falling particles
+  const speed = Math.sqrt(mousePos.vx * mousePos.vx + mousePos.vy * mousePos.vy);
+  if (speed > 1.2) {
+    for (let i = 0; i < pts.length; i++) {
+      const p = pts[i];
+      const dx = p.x - mx;
+      const dy = p.y - my;
+      const dist = Math.sqrt(dx * dx + dy * dy);
+      if (dist < 150 && dist > 0) {
+        const wind = (1 - dist / 150) * Math.min(speed * 0.28, 7);
+        p.extraVx += (mousePos.vx / speed) * wind * 0.7 + (dx / dist) * wind * 0.3;
+        p.extraVy += (mousePos.vy / speed) * wind * 0.7 + (dy / dist) * wind * 0.3;
+      }
+    }
+  }
+
+  // Track mouse coordinates for dynamic card lighting
+  const card = document.getElementById('authCard');
+  if (card) {
+    const rect = card.getBoundingClientRect();
+    card.style.setProperty('--mouse-x', `${mx - rect.left}px`);
+    card.style.setProperty('--mouse-y', `${my - rect.top}px`);
+  }
+
+  // Golden stardust spark trail
+  const now = performance.now();
+  if (now - lastTrailTime > 35) {
+    createCursorSpark(mx, my);
+    lastTrailTime = now;
+  }
 });
 
-[email, password].forEach((input) => input.addEventListener('input', clearMessages));
+(function renderCursor() {
+  cx += (mx - cx) * 0.18;
+  cy += (my - cy) * 0.18;
+  if (cursor) {
+    cursor.style.left = cx + 'px';
+    cursor.style.top = cy + 'px';
+  }
+  if (cursorDot) {
+    cursorDot.style.left = mx + 'px';
+    cursorDot.style.top = my + 'px';
+  }
+  requestAnimationFrame(renderCursor);
+})();
+
+function createCursorSpark(x, y) {
+  const spark = document.createElement('div');
+  spark.className = 'click-spark';
+  const size = Math.random() * 4 + 2;
+  spark.style.width = size + 'px';
+  spark.style.height = size + 'px';
+  spark.style.left = x + (Math.random() - 0.5) * 12 + 'px';
+  spark.style.top = y + (Math.random() - 0.5) * 12 + 'px';
+  spark.style.opacity = '0.85';
+  spark.style.transition = 'transform 0.4s ease-out, opacity 0.4s ease-out';
+  document.body.appendChild(spark);
+
+  requestAnimationFrame(() => {
+    spark.style.transform = `translate(-50%, -50%) translateY(${Math.random() * 18 + 6}px) scale(0)`;
+    spark.style.opacity = '0';
+  });
+
+  setTimeout(() => spark.remove(), 420);
+}
+
+// Hover states for cursor
+function updateHoverTargets() {
+  document.querySelectorAll('a, button, input, label, .social-btn').forEach(el => {
+    el.addEventListener('mouseenter', () => cursor?.classList.add('hovered'));
+    el.addEventListener('mouseleave', () => cursor?.classList.remove('hovered'));
+  });
+}
+updateHoverTargets();
+
+/* ── 3. Click Burst Effect & Ripple Wave ── */
+document.addEventListener('mousedown', e => {
+  cursor?.classList.add('clicking');
+  createClickRipple(e.clientX, e.clientY);
+  createClickBurst(e.clientX, e.clientY);
+});
+document.addEventListener('mouseup', () => {
+  cursor?.classList.remove('clicking');
+});
+
+function createClickRipple(x, y) {
+  const ripple = document.createElement('div');
+  ripple.className = 'click-ripple';
+  ripple.style.left = x + 'px';
+  ripple.style.top = y + 'px';
+  ripple.style.width = '24px';
+  ripple.style.height = '24px';
+  document.body.appendChild(ripple);
+  setTimeout(() => ripple.remove(), 600);
+}
+
+function createClickBurst(x, y) {
+  const count = 14;
+  for (let i = 0; i < count; i++) {
+    const spark = document.createElement('div');
+    spark.className = 'click-spark';
+    const size = Math.random() * 4 + 2.5;
+    spark.style.width = size + 'px';
+    spark.style.height = size + 'px';
+    spark.style.left = x + 'px';
+    spark.style.top = y + 'px';
+
+    const angle = (Math.PI * 2 * i) / count + (Math.random() - 0.5) * 0.5;
+    const distance = Math.random() * 55 + 25;
+    const targetX = Math.cos(angle) * distance;
+    const targetY = Math.sin(angle) * distance + 10; // slight gravity
+
+    spark.style.transition = `transform ${Math.random() * 0.25 + 0.35}s cubic-bezier(0.12, 0.8, 0.35, 1), opacity ${Math.random() * 0.2 + 0.3}s ease-out`;
+    document.body.appendChild(spark);
+
+    requestAnimationFrame(() => {
+      spark.style.transform = `translate(calc(-50% + ${targetX}px), calc(-50% + ${targetY}px)) scale(0.2)`;
+      spark.style.opacity = '0';
+    });
+
+    setTimeout(() => spark.remove(), 650);
+  }
+}
+
+/* ── 4. Cinematic Page Transition ── */
+function navigate(url) {
+  // Add sweep element if missing
+  let sweep = document.querySelector('.page-sweep');
+  if (!sweep) {
+    sweep = document.createElement('div');
+    sweep.className = 'page-sweep';
+    document.body.appendChild(sweep);
+  }
+  document.body.classList.add('page-out');
+  setTimeout(() => {
+    window.location.href = url;
+  }, 440);
+}
+
+/* ── 5. Authentication & Form Management ── */
+const ACCOUNTS_KEY = 'cn_accounts';
+const SESSION_KEY = 'cn_session';
+const ADMIN = { username: 'ADM', password: '0339171213a', role: 'admin' };
+
+function loadAccounts() {
+  let list = [];
+  try {
+    list = JSON.parse(localStorage.getItem(ACCOUNTS_KEY)) || [];
+  } catch {
+    list = [];
+  }
+  if (!list.find(a => a.username.toLowerCase() === ADMIN.username.toLowerCase())) {
+    list.unshift(ADMIN);
+    saveAccounts(list);
+  }
+  return list;
+}
+function saveAccounts(list) {
+  localStorage.setItem(ACCOUNTS_KEY, JSON.stringify(list));
+}
+
+// DOM Elements
+const cardModeTag  = document.getElementById('cardModeTag');
+const cardTitle    = document.getElementById('cardTitle');
+const cardSub      = document.getElementById('cardSub');
+const emailLabel   = document.getElementById('emailLabel');
+const fieldConfirm = document.getElementById('fieldConfirm');
+const rememberRow  = document.getElementById('rememberRow');
+const submitLabel  = document.getElementById('submitLabel');
+const toggleMode   = document.getElementById('toggleMode');
+const toggleLink   = document.getElementById('toggleLink');
+const forgotLink   = document.getElementById('forgotLink');
+const submitBtn    = document.getElementById('submitBtn');
+const formStatus   = document.getElementById('formStatus');
+
+const emailInput    = document.getElementById('emailInput');
+const passwordInput = document.getElementById('passwordInput');
+const confirmInput  = document.getElementById('confirmInput');
+const rememberCheck = document.getElementById('rememberCheck');
+const togglePw      = document.getElementById('togglePw');
+
+const emailErr    = document.getElementById('emailErr');
+const passwordErr = document.getElementById('passwordErr');
+const confirmErr  = document.getElementById('confirmErr');
+
+let isSignup = false;
+
+// Password visibility toggle
+togglePw.addEventListener('click', () => {
+  const show = passwordInput.type === 'password';
+  passwordInput.type = show ? 'text' : 'password';
+  togglePw.querySelector('.eye-open').style.display   = show ? 'none' : '';
+  togglePw.querySelector('.eye-closed').style.display = show ? ''     : 'none';
+});
+
+// Flip between Login and Signup mode
+function setMode(signup) {
+  isSignup = signup;
+  const card = document.getElementById('authCard');
+  card.classList.add('flip-out');
+
+  setTimeout(() => {
+    cardModeTag.textContent = signup ? 'JOIN CODENEST' : 'WELCOME BACK';
+    cardTitle.innerHTML     = (signup ? 'Tạo tài khoản' : 'Đăng nhập') + '<span class="accent">.</span>';
+    cardSub.textContent     = signup ? 'Bắt đầu hành trình sáng tạo của bạn.' : 'Tiếp tục hành trình của bạn.';
+    emailLabel.textContent  = signup ? 'Email' : 'Email hoặc tên đăng nhập';
+    emailInput.type         = signup ? 'email' : 'text';
+    emailInput.placeholder  = signup ? 'you@example.com' : 'you@example.com';
+    fieldConfirm.style.display = signup ? '' : 'none';
+    rememberRow.style.display  = signup ? 'none' : '';
+    submitLabel.textContent = signup ? 'Tạo tài khoản' : 'Đăng nhập';
+    toggleMode.innerHTML = signup
+      ? 'Đã có tài khoản? <a href="#" id="toggleLink">Đăng nhập →</a>'
+      : 'Chưa có tài khoản? <a href="#" id="toggleLink">Tạo tài khoản →</a>';
+
+    document.getElementById('toggleLink').addEventListener('click', e => {
+      e.preventDefault();
+      setMode(!isSignup);
+    });
+
+    clearErrors();
+    emailInput.value = '';
+    passwordInput.value = '';
+    confirmInput.value = '';
+    card.classList.remove('flip-out');
+    card.classList.add('flip-in');
+    setTimeout(() => card.classList.remove('flip-in'), 300);
+    updateHoverTargets();
+  }, 240);
+}
+
+toggleLink.addEventListener('click', e => {
+  e.preventDefault();
+  setMode(!isSignup);
+});
+
+forgotLink.addEventListener('click', e => {
+  e.preventDefault();
+  showStatus('Vui lòng liên hệ Admin để khôi phục mật khẩu.', false);
+});
+
+function clearErrors() {
+  emailErr.textContent = '';
+  passwordErr.textContent = '';
+  confirmErr.textContent = '';
+  formStatus.textContent = '';
+  formStatus.className = 'form-status';
+  document.querySelectorAll('.field-wrap.error').forEach(el => el.classList.remove('error'));
+}
+
+function showStatus(msg, ok = true) {
+  formStatus.textContent = msg;
+  formStatus.className = 'form-status ' + (ok ? 'ok' : 'err');
+}
+
+function shakeField(input) {
+  const wrap = input.closest('.field-wrap');
+  if (!wrap) return;
+  wrap.classList.add('error');
+  wrap.addEventListener('animationend', () => wrap.classList.remove('error'), { once: true });
+}
+
+// Restore saved username if Remember Me was selected
+const savedUsername = localStorage.getItem('cn_remember');
+if (savedUsername) {
+  emailInput.value = savedUsername;
+  rememberCheck.checked = true;
+}
+
+// Form Submit
+document.getElementById('loginForm').addEventListener('submit', async e => {
+  e.preventDefault();
+  clearErrors();
+
+  const user = emailInput.value.trim();
+  const pass = passwordInput.value;
+  const conf = confirmInput.value;
+
+  let valid = true;
+
+  if (!user) {
+    emailErr.textContent = 'Vui lòng nhập tài khoản hoặc email.';
+    shakeField(emailInput);
+    valid = false;
+  } else if (isSignup && !/^[^\s@]+@[^\s@]+\.[^\s@]+$/.test(user)) {
+    emailErr.textContent = 'Vui lòng nhập định dạng email hợp lệ.';
+    shakeField(emailInput);
+    valid = false;
+  }
+
+  if (pass.length < 6) {
+    passwordErr.textContent = 'Mật khẩu cần tối thiểu 6 ký tự.';
+    shakeField(passwordInput);
+    valid = false;
+  }
+
+  if (isSignup && pass !== conf) {
+    confirmErr.textContent = 'Mật khẩu xác nhận chưa khớp.';
+    shakeField(confirmInput);
+    valid = false;
+  }
+
+  if (!valid) return;
+
+  submitBtn.classList.add('loading');
+  const arrowSvg = submitBtn.querySelector('svg');
+  if (arrowSvg) arrowSvg.style.display = 'none';
+
+  await new Promise(r => setTimeout(r, 450));
+
+  const accounts = loadAccounts();
+
+  if (isSignup) {
+    if (accounts.find(a => a.username.toLowerCase() === user.toLowerCase())) {
+      emailErr.textContent = 'Tài khoản này đã tồn tại trong hệ thống.';
+      shakeField(emailInput);
+      submitBtn.classList.remove('loading');
+      if (arrowSvg) arrowSvg.style.display = '';
+      return;
+    }
+
+    const newAcc = {
+      username: user,
+      password: pass,
+      role: 'user',
+      createdAt: new Date().toISOString()
+    };
+    accounts.push(newAcc);
+    saveAccounts(accounts);
+    sessionStorage.setItem(SESSION_KEY, JSON.stringify({ username: user, role: 'user' }));
+    showStatus('✨ Tạo tài khoản thành công! Đang chuyển vào hệ thống...', true);
+    setTimeout(() => navigate('store.html'), 750);
+  } else {
+    const lUser = user.toLowerCase();
+    const acc =
+      (lUser === ADMIN.username.toLowerCase() && pass === ADMIN.password)
+        ? ADMIN
+        : accounts.find(a => a.username.toLowerCase() === lUser && a.password === pass);
+
+    if (!acc) {
+      showStatus('Tài khoản hoặc mật khẩu không chính xác.', false);
+      shakeField(emailInput);
+      shakeField(passwordInput);
+      submitBtn.classList.remove('loading');
+      if (arrowSvg) arrowSvg.style.display = '';
+      return;
+    }
+
+    if (rememberCheck.checked) {
+      localStorage.setItem('cn_remember', user);
+    } else {
+      localStorage.removeItem('cn_remember');
+    }
+
+    sessionStorage.setItem(SESSION_KEY, JSON.stringify({ username: acc.username, role: acc.role }));
+    showStatus('✨ Đăng nhập thành công! Đang vào CodeNest...', true);
+    setTimeout(() => navigate('store.html'), 650);
+  }
+});
+
+[emailInput, passwordInput, confirmInput].forEach(inp => {
+  inp.addEventListener('input', () => {
+    inp.closest('.field-wrap')?.classList.remove('error');
+    formStatus.textContent = '';
+  });
+});

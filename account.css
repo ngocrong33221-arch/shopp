@@ -1,1 +1,181 @@
-*{box-sizing:border-box}:root{--ink:#f1f5ed;--muted:#8c998d;--green:#b9f36b;--cyan:#00ffc3;--line:rgba(185,243,107,.17);--bg:#0a100d;--display:'Space Grotesk',sans-serif;--mono:'DM Mono',monospace}body{margin:0;min-width:320px;min-height:100vh;color:var(--ink);font-family:var(--display);background:radial-gradient(circle at 80% 15%,#1c3320,transparent 30%),linear-gradient(135deg,#080d0b,#101a13 60%,#080d0a)}.topbar{display:flex;align-items:center;max-width:1240px;margin:auto;padding:28px 6vw;border-bottom:1px solid var(--line)}.brand{display:flex;align-items:center;gap:10px;color:var(--ink);font-weight:600;text-decoration:none}.brand-mark{display:grid;width:30px;height:30px;place-items:center;border:1px solid var(--green);color:var(--green);font:10px var(--mono)}.accent,em{color:var(--green);font-style:normal}.topbar nav{display:flex;gap:28px;margin-left:auto;margin-right:40px}.topbar nav a{color:#849085;font-size:12px;text-decoration:none}.topbar nav a.active,.topbar nav a:hover{color:var(--ink)}.topbar button{border:0;color:#9aa69a;background:none;cursor:pointer}.account-shell{max-width:1000px;margin:auto;padding:85px 5vw}.eyebrow,.card-label{color:var(--green);font:10px var(--mono);letter-spacing:.12em}.account-heading h1{margin:18px 0;font-size:clamp(52px,7vw,88px);line-height:.9;letter-spacing:-.08em}.account-heading>p:last-child{max-width:360px;color:var(--muted);font-size:14px;line-height:1.6}.account-grid{display:grid;grid-template-columns:1fr 1fr;gap:18px;margin-top:65px}.profile-card,.password-card{position:relative;overflow:hidden;padding:30px;border:1px solid var(--line);background:rgba(16,28,18,.82)}.profile-card:after,.password-card:after{position:absolute;inset:-1px;z-index:0;padding:1px;content:'';background:conic-gradient(from 0deg,transparent 0deg,transparent 285deg,var(--cyan) 330deg,#6ee7ff 350deg,transparent 360deg);animation:accountBorder 4s linear infinite;mask:linear-gradient(#000 0 0) content-box,linear-gradient(#000 0 0);mask-composite:exclude;pointer-events:none}.profile-card>* ,.password-card>*{position:relative;z-index:1}.avatar{display:grid;width:58px;height:58px;margin-bottom:34px;place-items:center;border:1px solid var(--green);color:var(--green);font:22px var(--mono);box-shadow:0 0 25px rgba(0,255,195,.18)}.card-label{margin:0 0 12px;color:#7e8d80}.profile-card h2,.password-card h2{margin:0;font-size:26px}.profile-details{display:grid;gap:14px;margin-top:38px;padding-top:20px;border-top:1px solid var(--line);color:var(--muted);font:11px var(--mono)}.profile-details span{display:flex;justify-content:space-between;gap:18px}.profile-details b{color:var(--ink);font-weight:400;text-align:right}.profile-details .balance{color:var(--green)}.card-copy{margin:9px 0 28px;color:var(--muted);font-size:12px}.password-card label{display:block;margin:16px 0 7px;color:#bec8bd;font-size:12px}.password-card input{width:100%;height:45px;padding:0 12px;border:1px solid #344435;outline:0;color:var(--ink);font:12px var(--mono);background:#0b140e}.password-card input:focus{border-color:var(--green)}.save-button{display:flex;justify-content:space-between;width:100%;margin-top:25px;padding:14px 17px;border:0;color:#111c0d;font-weight:700;background:var(--green);cursor:pointer}.save-button span{font-size:18px}.form-status{min-height:15px;color:var(--green);font-size:11px;text-align:center}@keyframes accountBorder{to{transform:rotate(360deg)}}@media(max-width:700px){.topbar{padding:22px 20px}.topbar nav{display:none}.topbar button{margin-left:auto}.account-shell{padding:55px 20px}.account-grid{grid-template-columns:1fr;margin-top:45px}}
+/* ============================================================
+   CodeNest – account.css (Account Page)
+   Luxury Gold & Obsidian Black Theme
+   ============================================================ */
+
+.account-grid {
+  display: grid;
+  grid-template-columns: 1fr 1fr;
+  gap: 20px;
+  max-width: 1040px;
+  margin: 0 auto 64px;
+  padding: 0 6vw;
+}
+
+/* Card Section Titles */
+.card-label {
+  font-size: 10px;
+  font-family: var(--mono);
+  letter-spacing: 0.16em;
+  color: var(--gold);
+  text-transform: uppercase;
+  font-weight: 500;
+}
+.card-section-title {
+  font-size: 24px;
+  font-weight: 700;
+  letter-spacing: -0.04em;
+  margin: 10px 0 6px;
+  color: var(--ink);
+}
+.card-copy {
+  font-size: 13px;
+  color: var(--muted);
+  margin-bottom: 26px;
+  line-height: 1.6;
+}
+
+/* Profile Card */
+.profile-card {
+  padding: 36px;
+}
+.profile-avatar-wrap {
+  display: flex;
+  align-items: center;
+  gap: 18px;
+  margin-bottom: 30px;
+}
+.profile-avatar {
+  width: 64px;
+  height: 64px;
+  display: grid;
+  place-items: center;
+  border: 2px solid var(--gold);
+  border-radius: 16px;
+  font-size: 26px;
+  font-family: var(--mono);
+  font-weight: 800;
+  color: var(--gold-bright);
+  background: rgba(212, 175, 55, 0.08);
+  box-shadow: 0 0 28px rgba(212, 175, 55, 0.25);
+  flex-shrink: 0;
+  transition: transform 0.3s cubic-bezier(0.16, 1, 0.3, 1),
+              box-shadow 0.3s ease;
+}
+.profile-card:hover .profile-avatar {
+  transform: scale(1.05) rotate(2deg);
+  box-shadow: 0 0 35px rgba(212, 175, 55, 0.4);
+}
+.profile-name {
+  font-size: 24px;
+  font-weight: 700;
+  letter-spacing: -0.04em;
+  margin-top: 4px;
+  color: var(--ink);
+}
+
+/* Detail Rows */
+.profile-details {
+  display: grid;
+  gap: 0;
+}
+.detail-row {
+  display: flex;
+  justify-content: space-between;
+  align-items: center;
+  padding: 13px 0;
+  border-bottom: 1px solid var(--border);
+  font-size: 13px;
+  color: var(--muted);
+}
+.detail-row:last-child {
+  border-bottom: 0;
+}
+.detail-row strong {
+  color: var(--ink);
+  font-weight: 500;
+  font-family: var(--mono);
+  font-size: 13px;
+}
+.balance-val {
+  color: var(--gold-bright) !important;
+  font-size: 15px !important;
+  font-weight: 700 !important;
+  text-shadow: 0 0 12px var(--gold-glow);
+}
+
+/* Goto Wallet Link */
+.goto-wallet {
+  display: flex;
+  align-items: center;
+  justify-content: space-between;
+  margin-top: 26px;
+  padding: 14px 18px;
+  border: 1px solid var(--gold-border);
+  border-radius: var(--radius-sm);
+  background: rgba(212, 175, 55, 0.06);
+  color: var(--gold-bright);
+  font-size: 13px;
+  font-weight: 600;
+  text-decoration: none;
+  transition: var(--trans);
+}
+.goto-wallet:hover {
+  border-color: var(--gold-border-focus);
+  background: rgba(212, 175, 55, 0.14);
+  box-shadow: 0 6px 20px rgba(212, 175, 55, 0.2);
+  transform: translateY(-2px);
+}
+.goto-wallet:active {
+  transform: translateY(0);
+}
+
+/* Password Card */
+.password-card {
+  padding: 36px;
+}
+.pw-field {
+  display: flex;
+  flex-direction: column;
+  gap: 6px;
+  margin-bottom: 16px;
+}
+.pw-wrap {
+  position: relative;
+  display: flex;
+  align-items: center;
+}
+.pw-wrap .form-input {
+  padding-right: 44px;
+}
+.pw-toggle {
+  position: absolute;
+  right: 12px;
+  width: 28px;
+  height: 28px;
+  border: 0;
+  background: none;
+  color: var(--muted);
+  cursor: pointer;
+  display: flex;
+  align-items: center;
+  justify-content: center;
+  transition: color 0.2s;
+}
+.pw-toggle:hover {
+  color: var(--gold-bright);
+}
+
+.btn-primary {
+  margin-top: 10px;
+}
+.form-status {
+  margin-top: 12px;
+}
+
+@media (max-width: 760px) {
+  .account-grid {
+    grid-template-columns: 1fr;
+    padding: 0 16px;
+  }
+}

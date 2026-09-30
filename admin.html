@@ -1,4 +1,134 @@
 <!DOCTYPE html>
 <html lang="vi">
-<head><meta charset="UTF-8"><meta name="viewport" content="width=device-width, initial-scale=1.0"><title>CodeNest | Quản trị</title><link rel="preconnect" href="https://fonts.googleapis.com"><link rel="preconnect" href="https://fonts.gstatic.com" crossorigin><link href="https://fonts.googleapis.com/css2?family=DM+Mono:wght@400;500&family=Space+Grotesk:wght@400;500;600;700&display=swap" rel="stylesheet"><link rel="stylesheet" href="admin.css"></head>
-<body><header class="topbar"><a class="brand" href="store.html"><span class="brand-mark">&lt;/&gt;</span><span>codenest<span class="accent">.</span></span></a><nav><a href="store.html">Kho code</a><a href="wallet.html">Ví tiền</a><a class="active" href="admin.html">Quản trị</a></nav><button class="logout" id="logoutButton">Đăng xuất</button></header><main class="admin-shell"><section class="admin-heading"><p class="eyebrow">ADMIN CONSOLE</p><h1>Đưa code của bạn<br><em>lên kệ.</em></h1><p>Đăng tải sản phẩm mới, viết mô tả và đặt mức giá bằng Việt Nam Đồng.</p></section><section class="admin-grid"><form class="upload-card" id="productForm"><div class="card-top"><span>01 / NEW PRODUCT</span><span class="status-dot">● LIVE</span></div><label for="productName">Tên sản phẩm</label><input id="productName" required placeholder="Ví dụ: Aurora Landing Page"><label for="productDescription">Mô tả sản phẩm</label><textarea id="productDescription" required rows="4" placeholder="Sản phẩm này giúp người mua làm được gì?"></textarea><div class="two-col"><div><label for="productPrice">Giá bán (VNĐ)</label><input id="productPrice" type="number" min="1000" step="1000" required placeholder="150000"></div><div><label for="productCategory">Danh mục</label><select id="productCategory"><option value="web">Web template</option><option value="ui">UI kit</option><option value="motion">Motion</option></select></div></div><label class="file-drop" for="productFile"><span class="upload-icon">↑</span><span><b id="fileLabel">Chọn file code để tải lên</b><small>ZIP, HTML, CSS, JS · tối đa 25MB</small></span></label><input id="productFile" type="file" accept=".zip,.html,.css,.js,.json" required><button class="primary-button" type="submit">Đăng sản phẩm <span>↗</span></button><p class="form-status" id="formStatus" role="status"></p></form><aside class="preview-card"><p class="card-top">LIVE PREVIEW</p><div class="preview-art"><span>&lt;/&gt;</span></div><p class="preview-tag">YOUR CODE · NEW</p><h2 id="previewName">Tên sản phẩm của bạn</h2><p id="previewDescription">Mô tả ngắn sẽ xuất hiện ở đây.</p><strong id="previewPrice">0đ</strong></aside></section></main><script src="admin.js"></script></body></html>
+<head>
+  <meta charset="UTF-8">
+  <meta name="viewport" content="width=device-width, initial-scale=1.0">
+  <title>CodeNest | Quản trị</title>
+  <link rel="preconnect" href="https://fonts.googleapis.com">
+  <link rel="preconnect" href="https://fonts.gstatic.com" crossorigin>
+  <link href="https://fonts.googleapis.com/css2?family=Inter:wght@300;400;500;600;700;800&family=JetBrains+Mono:wght@400;500&display=swap" rel="stylesheet">
+  <link rel="stylesheet" href="shared.css">
+  <link rel="stylesheet" href="admin.css">
+</head>
+<body>
+  <div class="page-glow page-glow-1" aria-hidden="true"></div>
+  <div class="page-glow page-glow-2" aria-hidden="true"></div>
+  <div class="cursor" id="cursor" aria-hidden="true"></div>
+
+  <header class="topbar">
+    <div class="topbar-inner">
+      <a class="brand" href="store.html">
+        <div class="brand-icon">&lt;/&gt;</div>
+        <span class="brand-name">code<span class="accent">nest</span></span>
+      </a>
+      <nav class="topbar-nav">
+        <a href="store.html">Kho code</a>
+        <a href="wallet.html">Ví tiền</a>
+        <a href="account.html">Tài khoản</a>
+        <a href="admin.html" id="adminLink" class="active">Quản trị</a>
+      </nav>
+      <div class="topbar-user">
+        <div class="user-badge">
+          <div class="user-avatar" id="userAvatar">A</div>
+          <span id="userBadge">ADMIN</span>
+        </div>
+        <button class="logout-btn" id="logoutButton">Đăng xuất</button>
+      </div>
+    </div>
+  </header>
+
+  <main class="page-fade">
+    <section class="page-hero">
+      <div class="reveal">
+        <p class="eyebrow">Admin Console</p>
+        <h1 class="page-h1">Đưa code của bạn<br><em>lên kệ.</em></h1>
+        <p class="page-desc">Đăng tải sản phẩm mới, viết mô tả và đặt mức giá bằng Việt Nam Đồng.</p>
+      </div>
+    </section>
+
+    <section class="admin-grid">
+      <!-- Upload form -->
+      <form class="card upload-card reveal" id="productForm">
+        <div class="upload-header">
+          <span class="card-label">01 / NEW PRODUCT</span>
+          <span class="live-badge">● LIVE</span>
+        </div>
+
+        <div class="form-field">
+          <label class="form-label" for="productName">Tên sản phẩm</label>
+          <input class="form-input" id="productName" placeholder="Ví dụ: Aurora Landing Page" required>
+        </div>
+
+        <div class="form-field">
+          <label class="form-label" for="productDescription">Mô tả sản phẩm</label>
+          <textarea class="form-textarea" id="productDescription" rows="4" placeholder="Sản phẩm này giúp người mua làm được gì?" required></textarea>
+        </div>
+
+        <div class="two-col">
+          <div class="form-field">
+            <label class="form-label" for="productPrice">Giá bán (VNĐ)</label>
+            <input class="form-input" id="productPrice" type="number" min="1000" step="1000" placeholder="150000" required>
+          </div>
+          <div class="form-field">
+            <label class="form-label" for="productCategory">Danh mục</label>
+            <select class="form-input form-select" id="productCategory">
+              <option value="web">Web template</option>
+              <option value="ui">UI kit</option>
+              <option value="motion">Motion / Hiệu ứng</option>
+            </select>
+          </div>
+        </div>
+
+        <label class="file-drop" for="productFile" id="fileDrop">
+          <div class="file-icon">
+            <svg width="22" height="22" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2"><path d="M21 15v4a2 2 0 0 1-2 2H5a2 2 0 0 1-2-2v-4"/><polyline points="17 8 12 3 7 8"/><line x1="12" y1="3" x2="12" y2="15"/></svg>
+          </div>
+          <div>
+            <b id="fileLabel">Chọn hoặc kéo thả file code vào đây</b>
+            <small>Nhận mọi định dạng file · Không giới hạn loại file</small>
+          </div>
+        </label>
+        <input id="productFile" type="file" style="display:none">
+
+        <button class="btn-primary" type="submit" id="uploadBtn">
+          <span>Đăng sản phẩm</span>
+          <svg width="18" height="18" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2.5"><line x1="5" y1="12" x2="19" y2="12"/><polyline points="12 5 19 12 12 19"/></svg>
+        </button>
+        <p class="form-status" id="formStatus" role="status"></p>
+      </form>
+
+      <!-- Preview card -->
+      <div class="card preview-card reveal">
+        <span class="card-label">LIVE PREVIEW</span>
+        <div class="preview-art">
+          <span>&lt;/&gt;</span>
+        </div>
+        <p class="preview-tag">YOUR CODE · NEW</p>
+        <h2 class="preview-name" id="previewName">Tên sản phẩm của bạn</h2>
+        <p class="preview-desc" id="previewDescription">Mô tả ngắn sẽ xuất hiện ở đây.</p>
+        <strong class="preview-price" id="previewPrice">0đ</strong>
+      </div>
+    </section>
+
+    <!-- Inventory -->
+    <section class="inventory reveal" id="inventoryPanel">
+      <div class="inventory-header">
+        <div>
+          <span class="card-label">02 / YOUR PRODUCTS</span>
+          <h2 class="inv-title">Sản phẩm đã đăng</h2>
+        </div>
+        <span class="inv-count" id="productCount">0 sản phẩm</span>
+      </div>
+      <div class="inventory-list" id="productInventory"></div>
+    </section>
+  </main>
+
+  <div class="toast" id="toast" role="status">
+    <span class="toast-icon"><svg width="16" height="16" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2.5"><polyline points="20 6 9 17 4 12"/></svg></span>
+    <span id="toastMsg"></span>
+  </div>
+
+  <script src="shared.js"></script>
+  <script src="admin.js"></script>
+</body>
+</html>
