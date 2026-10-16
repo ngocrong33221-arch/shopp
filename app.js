@@ -10,6 +10,97 @@
   document.body.append(s);
 })();
 
+/* ── Draggable Floating Code Snippets ── */
+const floatingCodeItems = [...document.querySelectorAll('.code-float')];
+const codeMotion = floatingCodeItems.map((snippet, index) => ({
+  snippet,
+  fractionX: [0.12, 0.52, 0.78][index],
+  fractionY: [0.16, 0.53, 0.82][index],
+  phaseX: 0,
+  phaseY: 0,
+  speedX: 0.22 + index * 0.035,
+  speedY: 0.17 + index * 0.025,
+  dragOffsetX: 0,
+  dragOffsetY: 0,
+  activePointerId: null
+}));
+const prefersReducedMotion = window.matchMedia('(prefers-reduced-motion: reduce)');
+
+function getCodeMotionPosition(motion, time) {
+  const maxX = Math.max(0, window.innerWidth - motion.snippet.offsetWidth);
+  const maxY = Math.max(0, window.innerHeight - motion.snippet.offsetHeight);
+  return {
+    x: maxX * (0.5 + Math.sin(time * motion.speedX + motion.phaseX) * 0.48),
+    y: maxY * (0.5 + Math.sin(time * motion.speedY + motion.phaseY) * 0.48)
+  };
+}
+
+function animateFloatingCode(time) {
+  const motionTime = prefersReducedMotion.matches ? 0 : time / 1000;
+  for (const motion of codeMotion) {
+    if (motion.activePointerId !== null) continue;
+    const { snippet } = motion;
+    const position = getCodeMotionPosition(motion, motionTime);
+    snippet.style.left = `${position.x}px`;
+    snippet.style.top = `${position.y}px`;
+  }
+  window.requestAnimationFrame(animateFloatingCode);
+}
+
+for (const motion of codeMotion) {
+  const { snippet } = motion;
+  motion.phaseX = Math.asin((motion.fractionX - 0.5) / 0.48);
+  motion.phaseY = Math.asin((motion.fractionY - 0.5) / 0.48);
+
+  snippet.addEventListener('pointerdown', event => {
+    if (!event.isPrimary || event.button !== 0) return;
+    event.preventDefault();
+    snippet.classList.add('is-dragging');
+
+    const snippetRect = snippet.getBoundingClientRect();
+    motion.dragOffsetX = event.clientX - snippetRect.left;
+    motion.dragOffsetY = event.clientY - snippetRect.top;
+    motion.activePointerId = event.pointerId;
+    snippet.setPointerCapture(motion.activePointerId);
+  });
+
+  snippet.addEventListener('pointermove', event => {
+    if (event.pointerId !== motion.activePointerId) return;
+    const snippetRect = snippet.getBoundingClientRect();
+    const left = Math.min(
+      Math.max(0, event.clientX - motion.dragOffsetX),
+      Math.max(0, window.innerWidth - snippetRect.width)
+    );
+    const top = Math.min(
+      Math.max(0, event.clientY - motion.dragOffsetY),
+      Math.max(0, window.innerHeight - snippetRect.height)
+    );
+    snippet.style.left = `${left}px`;
+    snippet.style.top = `${top}px`;
+    const time = performance.now() / 1000;
+    const maxX = Math.max(1, window.innerWidth - snippet.offsetWidth);
+    const maxY = Math.max(1, window.innerHeight - snippet.offsetHeight);
+    const fractionX = Math.max(-1, Math.min(1, (left / maxX - 0.5) / 0.48));
+    const fractionY = Math.max(-1, Math.min(1, (top / maxY - 0.5) / 0.48));
+    motion.phaseX = Math.asin(fractionX) - time * motion.speedX;
+    motion.phaseY = Math.asin(fractionY) - time * motion.speedY;
+  });
+
+  function stopDragging(event) {
+    if (event.pointerId !== motion.activePointerId) return;
+    motion.activePointerId = null;
+    snippet.classList.remove('is-dragging');
+    if (snippet.hasPointerCapture(event.pointerId)) {
+      snippet.releasePointerCapture(event.pointerId);
+    }
+  }
+
+  snippet.addEventListener('pointerup', stopDragging);
+  snippet.addEventListener('pointercancel', stopDragging);
+}
+
+window.requestAnimationFrame(animateFloatingCode);
+
 /* ── 1. Golden Falling Particle Rain & Interactive Mouse Physics Engine ── */
 const canvas = document.getElementById('particles');
 const ctx = canvas.getContext('2d');
@@ -196,7 +287,9 @@ let cx = -100, cy = -100;
 let mx = -100, my = -100;
 let lastTrailTime = 0;
 
-document.addEventListener('mousemove', e => {
+document.addEventListener('pointermove', e => {
+  if (e.pointerType !== 'mouse' && e.pointerType !== 'pen') return;
+
   mx = e.clientX;
   my = e.clientY;
 
@@ -349,26 +442,7 @@ function navigate(url) {
 }
 
 /* ── 5. Authentication & Form Management ── */
-const ACCOUNTS_KEY = 'cn_accounts';
 const SESSION_KEY = 'cn_session';
-const ADMIN = { username: 'ADM', password: '0339171213a', role: 'admin' };
-
-function loadAccounts() {
-  let list = [];
-  try {
-    list = JSON.parse(localStorage.getItem(ACCOUNTS_KEY)) || [];
-  } catch {
-    list = [];
-  }
-  if (!list.find(a => a.username.toLowerCase() === ADMIN.username.toLowerCase())) {
-    list.unshift(ADMIN);
-    saveAccounts(list);
-  }
-  return list;
-}
-function saveAccounts(list) {
-  localStorage.setItem(ACCOUNTS_KEY, JSON.stringify(list));
-}
 
 // DOM Elements
 const cardModeTag  = document.getElementById('cardModeTag');
@@ -389,6 +463,7 @@ const passwordInput = document.getElementById('passwordInput');
 const confirmInput  = document.getElementById('confirmInput');
 const rememberCheck = document.getElementById('rememberCheck');
 const togglePw      = document.getElementById('togglePw');
+const toggleConfirmPw = document.getElementById('toggleConfirmPw');
 
 const emailErr    = document.getElementById('emailErr');
 const passwordErr = document.getElementById('passwordErr');
@@ -396,12 +471,56 @@ const confirmErr  = document.getElementById('confirmErr');
 
 let isSignup = false;
 
-// Password visibility toggle
+function createPasswordParticles(fieldWrap, visible) {
+  const bounds = fieldWrap.getBoundingClientRect();
+  const originX = bounds.width * 0.76;
+  const originY = bounds.height / 2;
+  const colors = ['#67e8f9', '#dff8ff', '#c4b5fd', '#ffffff'];
+
+  for (let index = 0; index < 12; index++) {
+    const particle = document.createElement('span');
+    const angle = (Math.PI * 2 * index) / 12 + (Math.random() - 0.5) * 0.45;
+    const distance = 14 + Math.random() * 28;
+    particle.className = 'password-particle';
+    particle.style.setProperty('--particle-x', `${Math.cos(angle) * distance}px`);
+    particle.style.setProperty('--particle-y', `${Math.sin(angle) * distance}px`);
+    particle.style.setProperty('--particle-size', `${2 + Math.random() * 3}px`);
+    particle.style.setProperty('--particle-delay', `${Math.random() * 90}ms`);
+    particle.style.setProperty('--particle-color', colors[index % colors.length]);
+    particle.style.left = `${originX}px`;
+    particle.style.top = `${originY}px`;
+    fieldWrap.append(particle);
+    particle.addEventListener('animationend', () => particle.remove(), { once: true });
+  }
+}
+
+function setPasswordVisibility(input, button, visible, animate = true) {
+  input.type = visible ? 'text' : 'password';
+  button.setAttribute('aria-pressed', String(visible));
+  button.setAttribute('aria-label', `${visible ? 'Ẩn' : 'Hiện'} ${input === confirmInput ? 'mật khẩu xác nhận' : 'mật khẩu'}`);
+  button.title = visible ? 'Ẩn mật khẩu' : 'Hiện mật khẩu';
+  button.classList.toggle('is-visible', visible);
+  button.classList.remove('eye-opening', 'eye-closing');
+  button.classList.add(visible ? 'eye-closing' : 'eye-opening');
+  window.setTimeout(() => button.classList.remove('eye-opening', 'eye-closing'), 440);
+  const fieldWrap = input.closest('.field-wrap');
+  fieldWrap.classList.remove('password-reveal', 'password-conceal');
+  void fieldWrap.offsetWidth;
+  fieldWrap.classList.add(visible ? 'password-reveal' : 'password-conceal');
+  if (animate) createPasswordParticles(fieldWrap, visible);
+}
+
+function resetPasswordVisibility() {
+  setPasswordVisibility(passwordInput, togglePw, false, false);
+  setPasswordVisibility(confirmInput, toggleConfirmPw, false, false);
+}
+
 togglePw.addEventListener('click', () => {
-  const show = passwordInput.type === 'password';
-  passwordInput.type = show ? 'text' : 'password';
-  togglePw.querySelector('.eye-open').style.display   = show ? 'none' : '';
-  togglePw.querySelector('.eye-closed').style.display = show ? ''     : 'none';
+  setPasswordVisibility(passwordInput, togglePw, passwordInput.type === 'password');
+});
+
+toggleConfirmPw.addEventListener('click', () => {
+  setPasswordVisibility(confirmInput, toggleConfirmPw, confirmInput.type === 'password');
 });
 
 // Flip between Login and Signup mode
@@ -411,7 +530,7 @@ function setMode(signup) {
   card.classList.add('flip-out');
 
   setTimeout(() => {
-    cardModeTag.textContent = signup ? 'JOIN CODENEST' : 'WELCOME BACK';
+    cardModeTag.textContent = 'CODENEST';
     cardTitle.innerHTML     = (signup ? 'Tạo tài khoản' : 'Đăng nhập') + '<span class="accent">.</span>';
     cardSub.textContent     = signup ? 'Bắt đầu hành trình sáng tạo của bạn.' : 'Tiếp tục hành trình của bạn.';
     emailLabel.textContent  = signup ? 'Email' : 'Email hoặc tên đăng nhập';
@@ -433,6 +552,7 @@ function setMode(signup) {
     emailInput.value = '';
     passwordInput.value = '';
     confirmInput.value = '';
+    resetPasswordVisibility();
     card.classList.remove('flip-out');
     card.classList.add('flip-in');
     setTimeout(() => card.classList.remove('flip-in'), 300);
@@ -462,6 +582,48 @@ function clearErrors() {
 function showStatus(msg, ok = true) {
   formStatus.textContent = msg;
   formStatus.className = 'form-status ' + (ok ? 'ok' : 'err');
+}
+
+const oauthParams = new URLSearchParams(window.location.search);
+const oauthErrorMessages = {
+  google_not_configured: 'Đăng nhập Google chưa được cấu hình trên máy chủ.',
+  github_not_configured: 'Đăng nhập GitHub chưa được cấu hình trên máy chủ.',
+  invalid_state: 'Phiên đăng nhập không hợp lệ hoặc đã hết hạn. Vui lòng thử lại.',
+  cancelled: 'Bạn đã hủy đăng nhập.',
+  provider_error: 'Không thể đăng nhập với nhà cung cấp này. Vui lòng thử lại.',
+};
+
+if (oauthParams.has('oauth_error')) {
+  showStatus(
+    oauthErrorMessages[oauthParams.get('oauth_error')] || 'Đăng nhập thất bại. Vui lòng thử lại.',
+    false
+  );
+  window.history.replaceState({}, document.title, window.location.pathname);
+} else if (oauthParams.get('oauth') === 'complete') {
+  showStatus('Đang hoàn tất đăng nhập...', true);
+  window.history.replaceState({}, document.title, window.location.pathname);
+  fetch('/api/auth/me', { credentials: 'same-origin' })
+    .then(response => {
+      if (!response.ok) throw new Error('OAuth session could not be loaded.');
+      return response.json();
+    })
+    .then(user => {
+      if (!user.username || user.role !== 'user') {
+        throw new Error('OAuth profile is incomplete.');
+      }
+      sessionStorage.setItem(SESSION_KEY, JSON.stringify({
+        username: user.username,
+        role: user.role,
+        displayName: user.displayName,
+        provider: user.provider,
+      }));
+      showStatus('Đăng nhập thành công! Đang vào CodeNest...', true);
+      setTimeout(() => navigate('store.html'), 650);
+    })
+    .catch(error => {
+      console.error('OAuth sign-in could not be completed:', error);
+      showStatus('Không thể hoàn tất đăng nhập. Vui lòng tải lại trang và thử lại.', false);
+    });
 }
 
 function shakeField(input) {
@@ -516,56 +678,52 @@ document.getElementById('loginForm').addEventListener('submit', async e => {
   submitBtn.classList.add('loading');
   const arrowSvg = submitBtn.querySelector('svg');
   if (arrowSvg) arrowSvg.style.display = 'none';
-
-  await new Promise(r => setTimeout(r, 450));
-
-  const accounts = loadAccounts();
-
-  if (isSignup) {
-    if (accounts.find(a => a.username.toLowerCase() === user.toLowerCase())) {
-      emailErr.textContent = 'Tài khoản này đã tồn tại trong hệ thống.';
-      shakeField(emailInput);
-      submitBtn.classList.remove('loading');
-      if (arrowSvg) arrowSvg.style.display = '';
+  try {
+    if (window.location.protocol === 'file:') {
+      showStatus('Bạn đang mở file trực tiếp. Hãy chạy start_codenest.bat rồi truy cập http://127.0.0.1:5000 để đăng nhập.', false);
+      return;
+    }
+    const response = await fetch(`/api/auth/${isSignup ? 'register' : 'login'}`, {
+      method: 'POST',
+      headers: { 'Content-Type': 'application/json' },
+      credentials: 'same-origin',
+      body: JSON.stringify({ username: user, password: pass }),
+    });
+    const result = await response.json();
+    if (!response.ok) {
+      if (response.status === 409 && isSignup) {
+        emailErr.textContent = 'Tài khoản này đã tồn tại trong hệ thống.';
+        shakeField(emailInput);
+      } else if (result.error === 'admin login is not configured on the server') {
+        showStatus('Chưa đặt ADMIN_PASSWORD trong .env. Hãy đặt mật khẩu admin rồi khởi động lại backend.', false);
+      } else {
+        showStatus(isSignup ? 'Không thể tạo tài khoản. Vui lòng kiểm tra lại thông tin.' : 'Tài khoản hoặc mật khẩu không chính xác.', false);
+        if (!isSignup) {
+          shakeField(emailInput);
+          shakeField(passwordInput);
+        }
+      }
       return;
     }
 
-    const newAcc = {
-      username: user,
-      password: pass,
-      role: 'user',
-      createdAt: new Date().toISOString()
-    };
-    accounts.push(newAcc);
-    saveAccounts(accounts);
-    sessionStorage.setItem(SESSION_KEY, JSON.stringify({ username: user, role: 'user' }));
-    showStatus('✨ Tạo tài khoản thành công! Đang chuyển vào hệ thống...', true);
-    setTimeout(() => navigate('store.html'), 750);
-  } else {
-    const lUser = user.toLowerCase();
-    const acc =
-      (lUser === ADMIN.username.toLowerCase() && pass === ADMIN.password)
-        ? ADMIN
-        : accounts.find(a => a.username.toLowerCase() === lUser && a.password === pass);
-
-    if (!acc) {
-      showStatus('Tài khoản hoặc mật khẩu không chính xác.', false);
-      shakeField(emailInput);
-      shakeField(passwordInput);
-      submitBtn.classList.remove('loading');
-      if (arrowSvg) arrowSvg.style.display = '';
-      return;
+    sessionStorage.setItem(SESSION_KEY, JSON.stringify({
+      username: result.username,
+      role: result.role,
+      displayName: result.displayName,
+      provider: result.provider,
+    }));
+    if (!isSignup) {
+      if (rememberCheck.checked) localStorage.setItem('cn_remember', user);
+      else localStorage.removeItem('cn_remember');
     }
-
-    if (rememberCheck.checked) {
-      localStorage.setItem('cn_remember', user);
-    } else {
-      localStorage.removeItem('cn_remember');
-    }
-
-    sessionStorage.setItem(SESSION_KEY, JSON.stringify({ username: acc.username, role: acc.role }));
-    showStatus('✨ Đăng nhập thành công! Đang vào CodeNest...', true);
-    setTimeout(() => navigate('store.html'), 650);
+    showStatus(isSignup ? '✨ Tạo tài khoản thành công! Đang chuyển vào hệ thống...' : '✨ Đăng nhập thành công! Đang vào CodeNest...', true);
+    setTimeout(() => navigate('store.html'), isSignup ? 750 : 650);
+  } catch (error) {
+    console.error('Authentication request failed:', error);
+    showStatus('Không kết nối được máy chủ. Vui lòng thử lại.', false);
+  } finally {
+    submitBtn.classList.remove('loading');
+    if (arrowSvg) arrowSvg.style.display = '';
   }
 });
 

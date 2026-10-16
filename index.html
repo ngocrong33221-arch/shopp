@@ -31,6 +31,7 @@
           <h1 class="hero-title">Build ideas.<br><span class="accent-text">Ship</span> more.</h1>
           <p class="hero-desc">Không gian tập trung cho những người biến dòng code thành điều đáng nhớ.</p>
         </div>
+
         <div class="hero-stats">
           <div class="stat-item">
             <span class="stat-num">∞</span>
@@ -49,16 +50,10 @@
         </div>
         <p class="hero-copy-small">© 2026 CodeNest Studio</p>
       </div>
-      <div class="hero-deco" aria-hidden="true">
-        <div class="deco-ring deco-ring-1"></div>
-        <div class="deco-ring deco-ring-2"></div>
-        <div class="deco-ring deco-ring-3"></div>
-        <div class="code-float code-float-1">
-          <span class="cf-kw">const</span> <span class="cf-var">idea</span> = <span class="cf-fn">new</span> <span class="cf-cls">Possibility</span>();
-        </div>
-        <div class="code-float code-float-2">
-          idea.<span class="cf-fn">ship</span>(<span class="cf-str">'something great'</span>);
-        </div>
+      <div class="hero-deco">
+        <div class="deco-ring deco-ring-1" aria-hidden="true"></div>
+        <div class="deco-ring deco-ring-2" aria-hidden="true"></div>
+        <div class="deco-ring deco-ring-3" aria-hidden="true"></div>
       </div>
     </section>
 
@@ -66,7 +61,7 @@
     <section class="auth-panel" aria-label="Xác thực">
       <div class="auth-card" id="authCard">
         <div class="card-header">
-          <span class="card-mode-tag" id="cardModeTag">WELCOME BACK</span>
+          <span class="card-mode-tag" id="cardModeTag">CODENEST</span>
           <h2 class="card-title" id="cardTitle">Đăng nhập<span class="accent">.</span></h2>
           <p class="card-sub" id="cardSub">Tiếp tục hành trình của bạn.</p>
         </div>
@@ -95,9 +90,9 @@
                 <svg width="16" height="16" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2"><rect x="3" y="11" width="18" height="11" rx="2"/><path d="M7 11V7a5 5 0 0 1 10 0v4"/></svg>
               </span>
               <input id="passwordInput" class="field-input" type="password" placeholder="Nhập mật khẩu" minlength="6" autocomplete="current-password" required>
-              <button class="toggle-pw" type="button" id="togglePw" aria-label="Hiện/ẩn mật khẩu">
+              <button class="toggle-pw" type="button" id="togglePw" aria-label="Hiện mật khẩu" aria-pressed="false" title="Hiện mật khẩu">
                 <svg class="eye-open" width="16" height="16" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2"><path d="M1 12s4-8 11-8 11 8 11 8-4 8-11 8-11-8-11-8z"/><circle cx="12" cy="12" r="3"/></svg>
-                <svg class="eye-closed" width="16" height="16" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" style="display:none"><path d="M17.94 17.94A10.07 10.07 0 0 1 12 20c-7 0-11-8-11-8a18.45 18.45 0 0 1 5.06-5.94"/><path d="M9.9 4.24A9.12 9.12 0 0 1 12 4c7 0 11 8 11 8a18.5 18.5 0 0 1-2.16 3.19"/><line x1="1" y1="1" x2="23" y2="23"/></svg>
+                <svg class="eye-closed" width="16" height="16" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"><path d="M2 9c2.7 4 6 6 10 6s7.3-2 10-6"/><path d="m5 15-1 1.5M9 16.5l-.3 1.7m6.6-1.7.3 1.7m3.4-3.5 1 1.5"/></svg>
               </button>
             </div>
             <p class="field-err" id="passwordErr" role="alert"></p>
@@ -111,6 +106,10 @@
                 <svg width="16" height="16" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2"><rect x="3" y="11" width="18" height="11" rx="2"/><path d="M7 11V7a5 5 0 0 1 10 0v4"/></svg>
               </span>
               <input id="confirmInput" class="field-input" type="password" placeholder="Nhập lại mật khẩu" minlength="6" autocomplete="new-password">
+              <button class="toggle-pw" type="button" id="toggleConfirmPw" aria-label="Hiện mật khẩu xác nhận" aria-pressed="false" title="Hiện mật khẩu">
+                <svg class="eye-open" width="16" height="16" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2"><path d="M1 12s4-8 11-8 11 8 11 8-4 8-11 8-11-8-11-8z"/><circle cx="12" cy="12" r="3"/></svg>
+                <svg class="eye-closed" width="16" height="16" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"><path d="M2 9c2.7 4 6 6 10 6s7.3-2 10-6"/><path d="m5 15-1 1.5M9 16.5l-.3 1.7m6.6-1.7.3 1.7m3.4-3.5 1 1.5"/></svg>
+              </button>
             </div>
             <p class="field-err" id="confirmErr" role="alert"></p>
           </div>
@@ -134,14 +133,14 @@
         <div class="card-divider"><span>hoặc tiếp tục với</span></div>
 
         <div class="social-btns">
-          <button class="social-btn" type="button">
+          <a class="social-btn" href="/api/auth/google" aria-label="Đăng nhập bằng Google">
             <svg width="18" height="18" viewBox="0 0 24 24"><path fill="#EA4335" d="M5.266 9.765A7.077 7.077 0 0 1 12 4.909c1.69 0 3.218.6 4.418 1.582L19.91 3C17.782 1.145 15.055 0 12 0 7.27 0 3.198 2.698 1.24 6.65l4.026 3.115Z"/><path fill="#34A853" d="M16.04 18.013c-1.09.703-2.474 1.078-4.04 1.078a7.077 7.077 0 0 1-6.723-4.823l-4.04 3.067A11.965 11.965 0 0 0 12 24c2.933 0 5.735-1.043 7.834-3l-3.793-2.987Z"/><path fill="#4A90E2" d="M19.834 21c2.195-2.048 3.62-5.096 3.62-9 0-.71-.109-1.473-.272-2.182H12v4.637h6.436c-.317 1.559-1.17 2.766-2.395 3.558L19.834 21Z"/><path fill="#FBBC05" d="M5.277 14.268A7.12 7.12 0 0 1 4.909 12c0-.782.125-1.533.357-2.235L1.24 6.65A11.934 11.934 0 0 0 0 12c0 1.92.445 3.73 1.237 5.335l4.04-3.067Z"/></svg>
             Google
-          </button>
-          <button class="social-btn" type="button">
+          </a>
+          <a class="social-btn" href="/api/auth/github" aria-label="Đăng nhập bằng GitHub">
             <svg width="18" height="18" viewBox="0 0 24 24" fill="currentColor"><path d="M12 0C5.374 0 0 5.373 0 12c0 5.302 3.438 9.8 8.207 11.387.599.111.793-.261.793-.577v-2.234c-3.338.726-4.033-1.416-4.033-1.416-.546-1.387-1.333-1.756-1.333-1.756-1.089-.745.083-.729.083-.729 1.205.084 1.839 1.237 1.839 1.237 1.07 1.834 2.807 1.304 3.492.997.107-.775.418-1.305.762-1.604-2.665-.305-5.467-1.334-5.467-5.931 0-1.311.469-2.381 1.236-3.221-.124-.303-.535-1.524.117-3.176 0 0 1.008-.322 3.301 1.23A11.509 11.509 0 0 1 12 5.803c1.02.005 2.047.138 3.006.404 2.291-1.552 3.297-1.23 3.297-1.23.653 1.653.242 2.874.118 3.176.77.84 1.235 1.911 1.235 3.221 0 4.609-2.807 5.624-5.479 5.921.43.372.823 1.102.823 2.222v3.293c0 .319.192.694.801.576C20.566 21.797 24 17.3 24 12c0-6.627-5.373-12-12-12z"/></svg>
             GitHub
-          </button>
+          </a>
         </div>
 
         <p class="toggle-mode" id="toggleMode">
@@ -151,6 +150,19 @@
     </section>
   </main>
 
+  <div class="floating-code-layer" aria-label="Các đoạn code chuyển động">
+    <div class="code-float code-float-1" role="group" tabindex="0" aria-label="Đoạn code trang trí, có thể kéo">
+      <span class="cf-kw">const</span> <span class="cf-var">idea</span> = <span class="cf-fn">new</span> <span class="cf-cls">Possibility</span>();
+    </div>
+    <div class="code-float code-float-2" role="group" tabindex="0" aria-label="Đoạn code trang trí, có thể kéo">
+      idea.<span class="cf-fn">ship</span>(<span class="cf-str">'something great'</span>);
+    </div>
+    <div class="code-float code-float-3" role="group" tabindex="0" aria-label="Đoạn code trang trí, có thể kéo">
+      <span class="cf-kw">function</span> <span class="cf-fn">create</span>() { <span class="cf-kw">return</span> <span class="cf-str">'magic'</span>; }
+    </div>
+  </div>
+
+  <script src="theme.js"></script>
   <script src="app.js"></script>
 </body>
 </html>

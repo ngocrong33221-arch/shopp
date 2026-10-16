@@ -3,6 +3,7 @@
    ============================================================ */
 
 const session = JSON.parse(sessionStorage.getItem('cn_session') || 'null');
+const API_BASE = window.location.protocol === 'file:' ? 'http://127.0.0.1:5000' : window.location.origin;
 
 const balanceEl   = document.getElementById('balance');
 const walletUser  = document.getElementById('walletUser');
@@ -63,25 +64,23 @@ document.getElementById('topupButton').addEventListener('click', async () => {
   statusEl.className = 'form-status ok';
 
   const expiresAt = Date.now() + 10 * 60 * 1000;
-  let content = `CN-${Math.random().toString(36).slice(2, 8).toUpperCase()}`;
 
   try {
-    const res = await fetch('http://127.0.0.1:5000/api/topups', {
+    const res = await fetch(`${API_BASE}/api/topups`, {
       method: 'POST',
       headers: { 'Content-Type': 'application/json' },
+      credentials: 'same-origin',
       body: JSON.stringify({ username: session.username, amount: selected.amount })
     });
-    if (!res.ok) throw new Error();
     const order = await res.json();
-    content = order.content;
+    if (!res.ok) throw new Error(order.error || 'Không thể tạo đơn nạp tiền.');
     statusEl.textContent = order.telegram_sent ? 'Đã gửi đơn và thông báo admin.' : 'Đơn đã lưu, thông báo admin chưa được gửi.';
+    displayOrder(selected.amount, order.content, expiresAt);
+    localStorage.setItem(`cn_pending_${session.username}`, JSON.stringify({ amount: selected.amount, content: order.content, expiresAt, status: 'pending' }));
   } catch {
-    statusEl.textContent = 'Backend chưa chạy — mã QR demo đã tạo.';
+    statusEl.textContent = 'Không thể tạo đơn nạp tiền. Hãy đăng nhập lại hoặc kiểm tra kết nối máy chủ.';
     statusEl.className = 'form-status err';
   }
-
-  displayOrder(selected.amount, content, expiresAt);
-  localStorage.setItem(`cn_pending_${session.username}`, JSON.stringify({ amount: selected.amount, content, expiresAt, status: 'pending' }));
 });
 
 function displayOrder(amount, content, expiresAt) {

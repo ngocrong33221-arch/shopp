@@ -12,7 +12,6 @@
 
 /* ── 1. Session Guard ── */
 const SESSION_KEY  = 'cn_session';
-const ACCOUNTS_KEY = 'cn_accounts';
 
 const _session = JSON.parse(sessionStorage.getItem(SESSION_KEY) || 'null');
 if (!_session) {
@@ -423,7 +422,16 @@ function createClickBurst(x, y) {
   if (admin)  admin.style.display = _session.role === 'admin' ? '' : 'none';
 
   if (logout) {
-    logout.addEventListener('click', () => {
+    logout.addEventListener('click', async () => {
+      try {
+        const response = await fetch('/api/auth/logout', {
+          method: 'POST',
+          credentials: 'same-origin',
+        });
+        if (!response.ok) throw new Error(`Logout request failed (${response.status}).`);
+      } catch (error) {
+        console.error('Could not clear the server-side sign-in session:', error);
+      }
       sessionStorage.removeItem(SESSION_KEY);
       navigate('index.html');
     });

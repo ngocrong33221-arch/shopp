@@ -25,6 +25,7 @@
         <a href="store.html">Kho code</a>
         <a href="wallet.html">Ví tiền</a>
         <a href="account.html">Tài khoản</a>
+        <a href="support.html">Hỗ trợ</a>
         <a href="admin.html" id="adminLink" class="active">Quản trị</a>
       </nav>
       <div class="topbar-user">
@@ -41,16 +42,149 @@
     <section class="page-hero">
       <div class="reveal">
         <p class="eyebrow">Admin Console</p>
-        <h1 class="page-h1">Đưa code của bạn<br><em>lên kệ.</em></h1>
-        <p class="page-desc">Đăng tải sản phẩm mới, viết mô tả và đặt mức giá bằng Việt Nam Đồng.</p>
+        <h1 class="page-h1">Trung tâm<br><em>quản trị.</em></h1>
+        <p class="page-desc">Quản lý thành viên, số dư, sản phẩm và diện mạo CodeNest.</p>
       </div>
+    </section>
+
+    <section class="admin-management reveal" aria-labelledby="usersTitle">
+      <div class="management-header">
+        <div>
+          <span class="card-label">01 / MEMBERS</span>
+          <h2 class="inv-title" id="usersTitle">Tài khoản thành viên</h2>
+          <p class="management-copy">Theo dõi ngày đăng ký, lần đăng nhập gần nhất và số dư. Bấm hàng bất kỳ tài khoản nào, kể cả quản trị viên, để chọn nhanh hoặc nhập username / tên hiển thị.</p>
+        </div>
+        <div class="management-tools">
+          <span class="inv-count" id="userCount">0 thành viên</span>
+          <button class="admin-secondary-btn" id="refreshUsers" type="button">Làm mới</button>
+        </div>
+      </div>
+
+      <form class="card balance-adjust-form" id="balanceForm">
+        <div class="form-field">
+          <label class="form-label" for="balanceUser">Tài khoản</label>
+          <input class="form-input" id="balanceUser" type="text" list="memberAccountSuggestions" placeholder="Nhập username hoặc tên hiển thị" autocomplete="off" required>
+          <datalist id="memberAccountSuggestions"></datalist>
+        </div>
+        <div class="form-field">
+          <label class="form-label" for="balanceDirection">Thao tác</label>
+          <select class="form-input form-select" id="balanceDirection">
+            <option value="add">Cộng tiền</option>
+            <option value="subtract">Trừ tiền</option>
+          </select>
+        </div>
+        <div class="form-field">
+          <label class="form-label" for="balanceAmount">Số tiền (VNĐ)</label>
+          <input class="form-input" id="balanceAmount" type="number" min="1" max="1000000000" step="1" placeholder="10000, 100000, 2999999" required>
+        </div>
+        <button class="btn-primary" type="submit" id="balanceSubmit">Cập nhật số dư</button>
+        <p class="form-status" id="usersStatus" role="status"></p>
+      </form>
+
+      <form class="card account-management-form" id="accountManagementForm">
+        <div class="form-field">
+          <label class="form-label" for="managedAccount">Quản lý tài khoản thành viên</label>
+          <select class="form-input form-select" id="managedAccount" required>
+            <option value="">Chọn thành viên</option>
+          </select>
+        </div>
+        <div class="form-field">
+          <label class="form-label" for="managedUsername">Username mới</label>
+          <input class="form-input" id="managedUsername" type="text" maxlength="254" autocomplete="off" required>
+        </div>
+        <div class="form-field">
+          <label class="form-label" for="managedPassword">Mật khẩu mới</label>
+          <input class="form-input" id="managedPassword" type="password" minlength="6" maxlength="128" autocomplete="new-password" placeholder="Để trống nếu không đổi">
+        </div>
+        <button class="btn-primary" type="submit" id="accountManagementSubmit">Lưu tài khoản</button>
+        <p class="form-status" id="accountManagementStatus" role="status">Mật khẩu cũ không thể xem lại; nhập mật khẩu mới nếu muốn đặt lại.</p>
+      </form>
+
+      <div class="member-list" id="userInventory" aria-live="polite"></div>
+    </section>
+
+    <section class="admin-management activity-panel reveal" aria-labelledby="activityTitle">
+      <div class="management-header">
+        <div>
+          <span class="card-label">02 / MEMBER ACTIVITY</span>
+          <h2 class="inv-title" id="activityTitle">Lịch sử nạp và chi tiêu</h2>
+          <p class="management-copy">Xem các lần nạp tiền, đơn đang chờ duyệt, giao dịch mua file và những lần quản trị viên điều chỉnh số dư.</p>
+        </div>
+      </div>
+      <form class="card activity-controls" id="activityForm">
+        <div class="form-field">
+          <label class="form-label" for="activityMember">Tài khoản thành viên</label>
+          <select class="form-input form-select" id="activityMember" required>
+            <option value="">Chọn thành viên</option>
+          </select>
+        </div>
+        <button class="btn-primary" type="submit" id="activitySubmit">Xem lịch sử</button>
+        <p class="form-status" id="activityStatus" role="status">Chọn một thành viên để xem toàn bộ giao dịch.</p>
+      </form>
+      <div class="activity-summary" aria-live="polite">
+        <article class="card activity-stat">
+          <span>Đã nạp thành công</span>
+          <strong id="activityTopups">—</strong>
+        </article>
+        <article class="card activity-stat">
+          <span>Đang chờ duyệt</span>
+          <strong id="activityPending">—</strong>
+        </article>
+        <article class="card activity-stat">
+          <span>Đã chi mua file</span>
+          <strong id="activityPurchases">—</strong>
+        </article>
+      </div>
+      <div class="activity-table-wrap">
+        <table class="activity-table">
+          <thead>
+            <tr>
+              <th>Thời gian</th>
+              <th>Loại giao dịch</th>
+              <th>Chi tiết</th>
+              <th>Số tiền</th>
+              <th>Trạng thái</th>
+            </tr>
+          </thead>
+          <tbody id="activityRows">
+            <tr><td class="activity-empty" colspan="5">Chưa chọn tài khoản thành viên.</td></tr>
+          </tbody>
+        </table>
+      </div>
+    </section>
+
+    <section class="admin-management appearance-panel reveal" aria-labelledby="appearanceTitle">
+      <div class="management-header">
+        <div>
+          <span class="card-label">03 / APPEARANCE</span>
+          <h2 class="inv-title" id="appearanceTitle">Giao diện toàn trang</h2>
+          <p class="management-copy">Thay màu nền và màu nhấn cho mọi trang, áp dụng với tất cả khách truy cập.</p>
+        </div>
+      </div>
+      <form class="card appearance-form" id="themeForm">
+        <label class="color-field" for="themeBackground">
+          <span class="form-label">Màu nền</span>
+          <input id="themeBackground" type="color" value="#060608">
+        </label>
+        <label class="color-field" for="themeAccent">
+          <span class="form-label">Màu nhấn</span>
+          <input id="themeAccent" type="color" value="#d4af37">
+        </label>
+        <div class="theme-presets" aria-label="Mẫu giao diện">
+          <button class="theme-preset" type="button" data-background="#060608" data-accent="#d4af37"><i style="--swatch:#d4af37"></i>Obsidian</button>
+          <button class="theme-preset" type="button" data-background="#07131c" data-accent="#45c5e8"><i style="--swatch:#45c5e8"></i>Ocean</button>
+          <button class="theme-preset" type="button" data-background="#120b1b" data-accent="#c084fc"><i style="--swatch:#c084fc"></i>Violet</button>
+        </div>
+        <button class="btn-primary" type="submit" id="themeSubmit">Lưu giao diện</button>
+        <p class="form-status" id="themeStatus" role="status"></p>
+      </form>
     </section>
 
     <section class="admin-grid">
       <!-- Upload form -->
       <form class="card upload-card reveal" id="productForm">
         <div class="upload-header">
-          <span class="card-label">01 / NEW PRODUCT</span>
+          <span class="card-label">03 / NEW PRODUCT</span>
           <span class="live-badge">● LIVE</span>
         </div>
 
@@ -114,7 +248,7 @@
     <section class="inventory reveal" id="inventoryPanel">
       <div class="inventory-header">
         <div>
-          <span class="card-label">02 / YOUR PRODUCTS</span>
+          <span class="card-label">04 / YOUR PRODUCTS</span>
           <h2 class="inv-title">Sản phẩm đã đăng</h2>
         </div>
         <span class="inv-count" id="productCount">0 sản phẩm</span>
@@ -128,6 +262,7 @@
     <span id="toastMsg"></span>
   </div>
 
+  <script src="theme.js"></script>
   <script src="shared.js"></script>
   <script src="admin.js"></script>
 </body>

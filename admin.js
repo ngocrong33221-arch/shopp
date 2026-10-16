@@ -145,4 +145,416 @@ async function renderInventory() {
   window.refreshHoverTargets?.();
 }
 
+const userInventory = document.getElementById('userInventory');
+const userCount = document.getElementById('userCount');
+const userInput = document.getElementById('balanceUser');
+const memberSuggestions = document.getElementById('memberAccountSuggestions');
+const usersStatus = document.getElementById('usersStatus');
+const managedAccount = document.getElementById('managedAccount');
+const activityMember = document.getElementById('activityMember');
+const activityStatus = document.getElementById('activityStatus');
+const activityRows = document.getElementById('activityRows');
+const managedUsername = document.getElementById('managedUsername');
+const managedPassword = document.getElementById('managedPassword');
+const accountManagementStatus = document.getElementById('accountManagementStatus');
+let memberAccounts = [];
+
+function formatAdminMoney(value) {
+  return `${Number(value || 0).toLocaleString('vi-VN')}đ`;
+}
+
+function clearMemberActivity() {
+  activityStatus.textContent = activityMember.value
+    ? 'Bấm “Xem lịch sử” để tải giao dịch của tài khoản này.'
+    : 'Chọn một thành viên để xem toàn bộ giao dịch.';
+  activityStatus.className = 'form-status';
+  document.getElementById('activityTopups').textContent = '—';
+  document.getElementById('activityPending').textContent = '—';
+  document.getElementById('activityPurchases').textContent = '—';
+  activityRows.replaceChildren();
+  const emptyRow = document.createElement('tr');
+  const emptyCell = document.createElement('td');
+  emptyCell.className = 'activity-empty';
+  emptyCell.colSpan = 5;
+  emptyCell.textContent = 'Chưa chọn tài khoản thành viên.';
+  emptyRow.append(emptyCell);
+  activityRows.append(emptyRow);
+}
+
+function formatAdminDate(value) {
+  if (!value) return 'Chưa đăng nhập';
+  const date = new Date(value);
+  return Number.isNaN(date.getTime())
+    ? 'Không xác định'
+    : date.toLocaleString('vi-VN', { dateStyle: 'short', timeStyle: 'short' });
+}
+
+async function renderUsers() {
+  usersStatus.textContent = '';
+  usersStatus.className = 'form-status';
+  try {
+    const response = await fetch(`${API_BASE}/api/admin/users`, { credentials: 'same-origin' });
+    const users = await response.json();
+    if (!response.ok) throw new Error(users.error || 'Không thể tải danh sách tài khoản.');
+
+    userCount.textContent = `${users.length} tài khoản`;
+    userInventory.replaceChildren();
+    memberSuggestions.replaceChildren();
+    memberAccounts = users;
+    const previousManagedUsername = managedAccount.value;
+    const previousActivityUsername = activityMember.value;
+    managedAccount.replaceChildren(new Option('Chọn thành viên', ''));
+    activityMember.replaceChildren(new Option('Chọn thành viên', ''));
+    memberAccounts.filter(user => user.role === 'user').forEach(user => {
+      managedAccount.add(new Option(`${user.displayName || user.username} · ${user.username}`, user.username));
+      activityMember.add(new Option(`${user.displayName || user.username} · ${user.username}`, user.username));
+    });
+    activityMember.value = memberAccounts.some(user =>
+      user.username === previousActivityUsername && user.role === 'user'
+    ) ? previousActivityUsername : '';
+    if (!activityMember.value) clearMemberActivity();
+    if (memberAccounts.some(user => user.username === previousManagedUsername && user.role === 'user')) {
+      managedAccount.value = previousManagedUsername;
+    } else {
+      managedUsername.value = '';
+      managedPassword.value = '';
+    }
+    memberAccounts.forEach(user => {
+      const suggestion = new Option(user.username, user.username);
+      suggestion.label = user.displayName || user.username;
+      memberSuggestions.append(suggestion);
+    });
+
+    if (!users.length) {
+      const empty = document.createElement('div');
+      empty.className = 'member-empty';
+      empty.textContent = 'Chưa có tài khoản thành viên nào.';
+      userInventory.append(empty);
+      return;
+    }
+
+    users.forEach(user => {
+      const row = document.createElement('article');
+      row.className = 'member-row';
+      const primary = document.createElement('div');
+      primary.className = 'member-primary';
+      const name = document.createElement('strong');
+      name.className = 'member-name';
+      name.textContent = user.displayName || user.username;
+      const selectMember = () => {
+        userInput.value = user.username;
+        usersStatus.textContent = `Đã chọn tài khoản ${user.username}.`;
+        usersStatus.className = 'form-status ok';
+        document.getElementById('balanceAmount').focus();
+      };
+      row.classList.add('member-row-selectable');
+      row.tabIndex = 0;
+      row.setAttribute('role', 'button');
+      row.setAttribute('aria-label', `Chọn tài khoản ${user.username}`);
+      row.addEventListener('click', selectMember);
+      row.addEventListener('keydown', event => {
+        if (event.target === row && (event.key === 'Enter' || event.key === ' ')) {
+          event.preventDefault();
+          selectMember();
+        }
+      });
+      const meta = document.createElement('span');
+      meta.className = 'member-meta';
+      meta.textContent = `${user.username} · ${user.role === 'admin' ? 'Quản trị viên' : user.authProvider || 'Thành viên'}`;
+      primary.append(name, meta);
+      if (user.role === 'user') {
+        const manageButton = document.createElement('button');
+        manageButton.className = 'member-manage-button';
+        manageButton.type = 'button';
+        manageButton.textContent = 'Quản lý TK';
+        manageButton.addEventListener('click', event => {
+          event.stopPropagation();
+          managedAccount.value = user.username;
+          managedUsername.value = user.username;
+          managedPassword.value = '';
+          accountManagementStatus.textContent = 'Mật khẩu cũ không thể xem lại; nhập mật khẩu mới nếu muốn đặt lại.';
+          accountManagementStatus.className = 'form-status';
+          managedUsername.focus();
+        });
+        primary.append(manageButton);
+      }
+      row.append(primary);
+
+      [
+        ['Ngày đăng ký', formatAdminDate(user.createdAt)],
+        ['Đăng nhập gần nhất', formatAdminDate(user.lastLoginAt)],
+        ['Số dư', `${Number(user.balance).toLocaleString('vi-VN')}đ`],
+        ['Mật khẩu', 'Không thể xem'],
+      ].forEach(([label, value]) => {
+        const detail = document.createElement('div');
+        detail.className = 'member-detail';
+        const detailLabel = document.createElement('span');
+        detailLabel.textContent = label;
+        const detailValue = document.createElement('strong');
+        detailValue.textContent = value;
+        if (label === 'Số dư') detailValue.className = 'member-balance';
+        detail.append(detailLabel, detailValue);
+        row.append(detail);
+      });
+      userInventory.append(row);
+    });
+    window.refreshHoverTargets?.();
+  } catch (error) {
+    console.error('Could not load admin accounts:', error);
+    usersStatus.textContent = error.message || 'Không kết nối được máy chủ.';
+    usersStatus.className = 'form-status err';
+  }
+}
+
+document.getElementById('refreshUsers').addEventListener('click', renderUsers);
+
+activityMember.addEventListener('change', clearMemberActivity);
+
+document.getElementById('activityForm').addEventListener('submit', async event => {
+  event.preventDefault();
+  const username = activityMember.value;
+  if (!username) return;
+
+  const submitButton = document.getElementById('activitySubmit');
+  activityStatus.textContent = 'Đang tải lịch sử giao dịch...';
+  activityStatus.className = 'form-status';
+  submitButton.disabled = true;
+  try {
+    const response = await fetch(
+      `${API_BASE}/api/admin/users/${encodeURIComponent(username)}/activity`,
+      { credentials: 'same-origin' },
+    );
+    const result = await response.json();
+    if (!response.ok) throw new Error(result.error || 'Không thể tải lịch sử giao dịch.');
+
+    document.getElementById('activityTopups').textContent = formatAdminMoney(result.summary.approvedTopups);
+    document.getElementById('activityPending').textContent = formatAdminMoney(result.summary.pendingTopups);
+    document.getElementById('activityPurchases').textContent = formatAdminMoney(result.summary.purchases);
+    activityRows.replaceChildren();
+
+    if (!result.activity.length) {
+      const emptyRow = document.createElement('tr');
+      const emptyCell = document.createElement('td');
+      emptyCell.className = 'activity-empty';
+      emptyCell.colSpan = 5;
+      emptyCell.textContent = 'Tài khoản này chưa có giao dịch nào.';
+      emptyRow.append(emptyCell);
+      activityRows.append(emptyRow);
+    } else {
+      result.activity.forEach(item => {
+        const row = document.createElement('tr');
+        const date = document.createElement('td');
+        date.textContent = formatAdminDate(item.eventAt);
+
+        const type = document.createElement('td');
+        type.textContent = item.eventType === 'topup'
+          ? 'Nạp tiền'
+          : item.eventType === 'purchase' ? 'Mua file' : 'Điều chỉnh số dư';
+
+        const description = document.createElement('td');
+        description.className = 'activity-description';
+        description.textContent = item.bankReference
+          ? `${item.description} · Mã ngân hàng: ${item.bankReference}`
+          : item.description;
+        if (item.eventType === 'topup' && item.completedAt) {
+          description.append(document.createElement('br'));
+          const completedAt = document.createElement('small');
+          completedAt.textContent = `Duyệt lúc ${formatAdminDate(item.completedAt)}`;
+          description.append(completedAt);
+        }
+
+        const amount = document.createElement('td');
+        amount.className = item.amount >= 0 ? 'activity-amount-positive' : 'activity-amount-negative';
+        amount.textContent = `${item.amount > 0 ? '+' : ''}${formatAdminMoney(item.amount)}`;
+
+        const status = document.createElement('td');
+        status.textContent = item.status === 'pending'
+          ? 'Chờ duyệt'
+          : item.status === 'approved' ? 'Đã duyệt' : 'Hoàn tất';
+        status.className = `activity-status activity-status-${item.status}`;
+        row.append(date, type, description, amount, status);
+        activityRows.append(row);
+      });
+    }
+    activityStatus.textContent = `Đã tải ${result.activity.length} giao dịch của ${result.displayName || result.username}.`;
+    activityStatus.className = 'form-status ok';
+  } catch (error) {
+    console.error('Could not load member activity:', error);
+    activityStatus.textContent = error.message || 'Không kết nối được máy chủ.';
+    activityStatus.className = 'form-status err';
+  } finally {
+    submitButton.disabled = false;
+  }
+});
+
+managedAccount.addEventListener('change', () => {
+  const account = memberAccounts.find(user => user.username === managedAccount.value && user.role === 'user');
+  managedUsername.value = account?.username || '';
+  managedPassword.value = '';
+});
+
+document.getElementById('accountManagementForm').addEventListener('submit', async event => {
+  event.preventDefault();
+  const account = memberAccounts.find(user => user.username === managedAccount.value && user.role === 'user');
+  if (!account) {
+    accountManagementStatus.textContent = 'Hãy chọn tài khoản thành viên cần quản lý.';
+    accountManagementStatus.className = 'form-status err';
+    return;
+  }
+
+  const submitButton = document.getElementById('accountManagementSubmit');
+  accountManagementStatus.textContent = '';
+  accountManagementStatus.className = 'form-status';
+  submitButton.disabled = true;
+  try {
+    const response = await fetch(`${API_BASE}/api/admin/users/${encodeURIComponent(account.username)}/account`, {
+      method: 'POST',
+      headers: { 'Content-Type': 'application/json' },
+      credentials: 'same-origin',
+      body: JSON.stringify({
+        newUsername: managedUsername.value.trim(),
+        newPassword: managedPassword.value,
+      }),
+    });
+    const result = await response.json();
+    if (!response.ok) {
+      accountManagementStatus.textContent = result.error === 'username already exists'
+        ? 'Username này đã được sử dụng.'
+        : result.error || 'Không thể cập nhật tài khoản.';
+      accountManagementStatus.className = 'form-status err';
+      return;
+    }
+
+    await renderUsers();
+    managedAccount.value = result.username;
+    managedUsername.value = result.username;
+    managedPassword.value = '';
+    accountManagementStatus.textContent = [
+      result.usernameChanged ? `Đã đổi username thành ${result.username}.` : 'Username được giữ nguyên.',
+      result.passwordChanged ? 'Đã đặt mật khẩu mới.' : 'Mật khẩu được giữ nguyên.',
+      result.usernameChanged ? 'Thành viên cần đăng nhập lại bằng username mới.' : '',
+    ].filter(Boolean).join(' ');
+    accountManagementStatus.className = 'form-status ok';
+  } catch (error) {
+    console.error('Could not update member account:', error);
+    accountManagementStatus.textContent = 'Không kết nối được máy chủ.';
+    accountManagementStatus.className = 'form-status err';
+  } finally {
+    submitButton.disabled = false;
+  }
+});
+
+document.getElementById('balanceForm').addEventListener('submit', async event => {
+  event.preventDefault();
+  const amount = Number(document.getElementById('balanceAmount').value);
+  const sign = document.getElementById('balanceDirection').value === 'subtract' ? -1 : 1;
+  const enteredUsername = userInput.value.trim();
+  const matchingMembers = memberAccounts.filter(account =>
+    account.username.toLowerCase() === enteredUsername.toLowerCase()
+    || (account.displayName || '').toLowerCase() === enteredUsername.toLowerCase()
+  );
+  const reason = sign < 0 ? 'Quản trị viên trừ tiền' : 'Quản trị viên cộng tiền';
+  const submitButton = document.getElementById('balanceSubmit');
+  usersStatus.className = 'form-status';
+  usersStatus.textContent = '';
+  if (!Number.isSafeInteger(amount) || amount < 1 || amount > 1_000_000_000) {
+    usersStatus.textContent = 'Số tiền phải là số nguyên VNĐ từ 1 đến 1.000.000.000.';
+    usersStatus.className = 'form-status err';
+    return;
+  }
+  if (matchingMembers.length !== 1) {
+    usersStatus.textContent = matchingMembers.length > 1
+      ? 'Tên hiển thị này trùng với nhiều tài khoản. Hãy nhập username hoặc bấm vào đúng hàng tài khoản.'
+      : 'Không tìm thấy tài khoản. Hãy nhập đúng username hoặc bấm vào hàng tài khoản bên dưới.';
+    usersStatus.className = 'form-status err';
+    return;
+  }
+  const member = matchingMembers[0];
+
+  submitButton.disabled = true;
+  try {
+    const response = await fetch(`${API_BASE}/api/admin/users/${encodeURIComponent(member.username)}/balance`, {
+      method: 'POST',
+      headers: { 'Content-Type': 'application/json' },
+      credentials: 'same-origin',
+      body: JSON.stringify({ amount: amount * sign, reason }),
+    });
+    const result = await response.json();
+    if (!response.ok) {
+      usersStatus.textContent = result.error === 'adjustment would make the balance negative'
+        ? 'Số dư không đủ để thực hiện thao tác trừ.'
+        : result.error || 'Không thể cập nhật số dư.';
+      usersStatus.className = 'form-status err';
+      return;
+    }
+    const changeLabel = sign > 0 ? 'đã cộng' : 'đã trừ';
+    const successMessage = `${result.username}: ${changeLabel} ${amount.toLocaleString('vi-VN')}đ; số dư mới ${Number(result.balance).toLocaleString('vi-VN')}đ.`;
+    event.target.reset();
+    await renderUsers();
+    usersStatus.textContent = successMessage;
+    usersStatus.className = 'form-status ok';
+  } catch (error) {
+    console.error('Balance adjustment failed:', error);
+    usersStatus.textContent = 'Không kết nối được máy chủ.';
+    usersStatus.className = 'form-status err';
+  } finally {
+    submitButton.disabled = false;
+  }
+});
+
+async function loadThemeSettings() {
+  try {
+    const response = await fetch(`${API_BASE}/api/site/theme`);
+    if (!response.ok) throw new Error('Không tải được giao diện đã lưu.');
+    const theme = await response.json();
+    document.getElementById('themeBackground').value = theme.background;
+    document.getElementById('themeAccent').value = theme.accent;
+  } catch (error) {
+    console.error('Could not load site theme:', error);
+    const status = document.getElementById('themeStatus');
+    status.textContent = 'Không tải được giao diện đã lưu.';
+    status.className = 'form-status err';
+  }
+}
+
+document.querySelectorAll('.theme-preset').forEach(button => {
+  button.addEventListener('click', () => {
+    document.getElementById('themeBackground').value = button.dataset.background;
+    document.getElementById('themeAccent').value = button.dataset.accent;
+  });
+});
+
+document.getElementById('themeForm').addEventListener('submit', async event => {
+  event.preventDefault();
+  const background = document.getElementById('themeBackground').value;
+  const accent = document.getElementById('themeAccent').value;
+  const status = document.getElementById('themeStatus');
+  status.className = 'form-status';
+  status.textContent = '';
+
+  const submitButton = document.getElementById('themeSubmit');
+  submitButton.disabled = true;
+  try {
+    const response = await fetch(`${API_BASE}/api/admin/theme`, {
+      method: 'POST',
+      headers: { 'Content-Type': 'application/json' },
+      credentials: 'same-origin',
+      body: JSON.stringify({ background, accent }),
+    });
+    const result = await response.json();
+    if (!response.ok) throw new Error(result.error || 'Không thể lưu giao diện.');
+    window.applyCodeNestTheme?.(result);
+    status.textContent = 'Đã cập nhật giao diện cho toàn trang.';
+    status.className = 'form-status ok';
+  } catch (error) {
+    console.error('Could not save site theme:', error);
+    status.textContent = error.message || 'Không kết nối được máy chủ.';
+    status.className = 'form-status err';
+  } finally {
+    submitButton.disabled = false;
+  }
+});
+
 renderInventory();
+renderUsers();
+loadThemeSettings();
